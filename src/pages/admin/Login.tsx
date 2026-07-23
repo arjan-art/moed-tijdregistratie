@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ShieldCheck, Eye, EyeOff, AlertCircle, Timer } from 'lucide-react'
+import { ShieldCheck, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { getAdminByEmail } from '@/lib/db'
 
 export default function AdminLogin() {
@@ -53,7 +53,7 @@ export default function AdminLogin() {
       >
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-brand-500 flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <Timer className="w-8 h-8 text-white" />
+            <img src="/moed-logo.svg" alt="MOED" className="w-10 h-10" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">MOED Admin</h1>
           <p className="text-muted-foreground mt-1">Log in om door te gaan</p>
