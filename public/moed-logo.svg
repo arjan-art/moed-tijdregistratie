@@ -1,178 +1,205 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 600" width="500" height="600">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 560" width="600" height="560">
   <defs>
-    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#e8872d;stop-opacity:1" />
-      <stop offset="40%" style="stop-color:#d4a017;stop-opacity:1" />
-      <stop offset="40%" style="stop-color:#1b2a4a;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#0f1a30;stop-opacity:1" />
+    <!-- Gradients -->
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e87e28"/>
+      <stop offset="100%" stop-color="#f09334"/>
     </linearGradient>
     <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#f5d76e;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#d4a017;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#b8860b;stop-opacity:1" />
+      <stop offset="0%" stop-color="#e6c04a"/>
+      <stop offset="50%" stop-color="#d4a017"/>
+      <stop offset="100%" stop-color="#b8860b"/>
     </linearGradient>
-    <linearGradient id="rimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#f5d76e;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#c9a227;stop-opacity:1" />
+    <linearGradient id="goldLight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f0d060"/>
+      <stop offset="100%" stop-color="#d4a017"/>
     </linearGradient>
-    <linearGradient id="lionGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#f5d76e;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#d4a017;stop-opacity:1" />
+    <linearGradient id="goldFace" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f5e6a3"/>
+      <stop offset="100%" stop-color="#e8c84a"/>
     </linearGradient>
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.25"/>
-    </filter>
+    <linearGradient id="lionMane" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e8c84a"/>
+      <stop offset="100%" stop-color="#c9960a"/>
+    </linearGradient>
   </defs>
 
-  <!-- Main Shield -->
-  <g filter="url(#shadow)">
-    <path d="M250 30 L430 100 L430 280 Q430 380 250 500 Q70 380 70 280 L70 100 Z" fill="#1b2a4a" stroke="#1b2a4a" stroke-width="12" stroke-linejoin="round"/>
-    <path d="M250 38 L422 104 L422 278 Q422 375 250 492 Q78 375 78 278 L78 104 Z" fill="url(#rimGrad)"/>
-    <path d="M250 45 L415 108 L415 276 Q415 370 250 484 Q85 370 85 276 L85 108 Z" fill="url(#shieldGrad)"/>
-    <path d="M250 55 L405 114 L405 274 Q405 362 250 472 Q95 362 95 274 L95 114 Z" fill="none" stroke="#f5d76e" stroke-width="1.5" opacity="0.6"/>
+  <!-- Background -->
+  <rect width="600" height="560" fill="#e8eef4"/>
+
+  <!-- ==================== TOP SHIELD SECTION ==================== -->
+  <!-- Dark blue border - top shield -->
+  <path d="M 300,65 L 100,115 L 100,242 L 500,242 L 500,115 Z" 
+        fill="none" stroke="#1e3a5f" stroke-width="14" stroke-linejoin="round"/>
+  
+  <!-- Gold rim - top shield -->
+  <path d="M 300,72 L 107,119 L 107,235 L 493,235 L 493,119 Z" 
+        fill="none" stroke="#c9960a" stroke-width="4" stroke-linejoin="round"/>
+  
+  <!-- Orange fill - top shield -->
+  <path d="M 300,78 L 113,123 L 113,230 L 487,230 L 487,123 Z" 
+        fill="url(#orangeGrad)"/>
+
+  <!-- ==================== BOTTOM SHIELD SECTION ==================== -->
+  <!-- Dark blue border - bottom shield -->
+  <path d="M 100,378 C 100,378 105,420 145,460 C 185,500 240,525 300,525 C 360,525 415,500 455,460 C 495,420 500,378 500,378 L 100,378 Z" 
+        fill="none" stroke="#1e3a5f" stroke-width="14" stroke-linejoin="round"/>
+  
+  <!-- Gold rim - bottom shield -->
+  <path d="M 107,384 C 107,384 112,418 148,454 C 185,490 238,515 300,515 C 362,515 415,490 452,454 C 488,418 493,384 493,384 L 107,384 Z" 
+        fill="none" stroke="#c9960a" stroke-width="4" stroke-linejoin="round"/>
+  
+  <!-- Orange fill - bottom shield -->
+  <path d="M 113,390 C 113,390 118,416 151,449 C 185,482 236,508 300,508 C 364,508 415,482 449,449 C 482,416 487,390 487,390 L 113,390 Z" 
+        fill="url(#orangeGrad)"/>
+
+  <!-- ==================== LEFT GEAR (inside top shield) ==================== -->
+  <g transform="translate(175, 180)">
+    <path d="M 0,-38 L 4.5,-30 A 26,26 0 0,1 14,-24 L 24,-28 L 28,-18 L 20,-11 A 26,26 0 0,1 21,0 L 31,4 L 28,14 L 18,12A 26,26 0 0,1 10,21 L 14,31 L 4,35 L 0,26A 26,26 0 0,1 -10,21 L -20,28 L -26,19 L -16,11A 26,26 0 0,1 -19,0 L -29,-3 L -26,-14 L -16,-12A 26,26 0 0,1 -10,-21 L -14,-31 L -4,-35 Z" fill="url(#goldGrad)"/>
+    <circle cx="0" cy="0" r="14" fill="#8B4513" opacity="0.25"/>
+    <circle cx="0" cy="0" r="7" fill="#5a3a10" opacity="0.3"/>
   </g>
 
-  <!-- Stopwatch -->
-  <g transform="translate(250, 110)">
-    <rect x="-6" y="-38" width="12" height="18" rx="3" fill="#d4a017" stroke="#8b6914" stroke-width="1.5"/>
-    <rect x="-8" y="-42" width="16" height="6" rx="2" fill="#f5d76e"/>
-    <rect x="-32" y="-20" width="10" height="14" rx="2" fill="#d4a017" stroke="#8b6914" stroke-width="1"/>
-    <rect x="22" y="-20" width="10" height="14" rx="2" fill="#d4a017" stroke="#8b6914" stroke-width="1"/>
-    <circle cx="0" cy="0" r="42" fill="#f5f5f0" stroke="#d4a017" stroke-width="5"/>
-    <circle cx="0" cy="0" r="36" fill="#fff" stroke="#e0e0e0" stroke-width="1"/>
-    <line x1="0" y1="-30" x2="0" y2="-24" stroke="#1b2a4a" stroke-width="3" stroke-linecap="round"/>
-    <line x1="0" y1="30" x2="0" y2="24" stroke="#1b2a4a" stroke-width="3" stroke-linecap="round"/>
-    <line x1="-30" y1="0" x2="-24" y2="0" stroke="#1b2a4a" stroke-width="3" stroke-linecap="round"/>
-    <line x1="30" y1="0" x2="24" y2="0" stroke="#1b2a4a" stroke-width="3" stroke-linecap="round"/>
-    <line x1="-21" y1="-21" x2="-17" y2="-17" stroke="#1b2a4a" stroke-width="2" stroke-linecap="round"/>
-    <line x1="21" y1="-21" x2="17" y2="-17" stroke="#1b2a4a" stroke-width="2" stroke-linecap="round"/>
-    <line x1="-21" y1="21" x2="-17" y2="17" stroke="#1b2a4a" stroke-width="2" stroke-linecap="round"/>
-    <line x1="21" y1="21" x2="17" y2="17" stroke="#1b2a4a" stroke-width="2" stroke-linecap="round"/>
-    <line x1="0" y1="-30" x2="0" y2="-27" stroke="#888" stroke-width="1" transform="rotate(30)"/>
-    <line x1="0" y1="-30" x2="0" y2="-27" stroke="#888" stroke-width="1" transform="rotate(60)"/>
-    <line x1="0" y1="-30" x2="0" y2="-27" stroke="#888" stroke-width="1" transform="rotate(120)"/>
-    <line x1="0" y1="-30" x2="0" y2="-27" stroke="#888" stroke-width="1" transform="rotate(150)"/>
-    <line x1="0" y1="-30" x2="0" y2="-27" stroke="#888" stroke-width="1" transform="rotate(210)"/>
-    <line x1="0" y1="-30" x2="0" y2="-27" stroke="#888" stroke-width="1" transform="rotate(240)"/>
-    <line x1="0" y1="-30" x2="0" y2="-27" stroke="#888" stroke-width="1" transform="rotate(300)"/>
-    <line x1="0" y1="-30" x2="0" y2="-27" stroke="#888" stroke-width="1" transform="rotate(330)"/>
-    <line x1="0" y1="0" x2="0" y2="-22" stroke="#1b2a4a" stroke-width="2.5" stroke-linecap="round"/>
-    <line x1="0" y1="0" x2="18" y2="12" stroke="#e8872d" stroke-width="2" stroke-linecap="round"/>
-    <circle cx="0" cy="0" r="4" fill="#1b2a4a"/>
-    <circle cx="0" cy="0" r="2" fill="#e8872d"/>
+  <!-- ==================== RIGHT LION HEAD (inside top shield) ==================== -->
+  <g transform="translate(420, 175)">
+    <!-- Mane spikes -->
+    <path d="M 0,-35 L 8,-28 L 15,-32 L 20,-22 L 30,-24 L 28,-12 L 35,-8 L 28,2 L 32,10 L 22,14 L 20,24 L 8,22 L 0,30 L -8,22 L -18,26 L -22,16 L -30,12 L -26,2 L -32,-6 L -24,-12 L -26,-22 L -16,-20 L -10,-30 Z" fill="url(#lionMane)" stroke="#b8860b" stroke-width="1"/>
+    <!-- Inner lighter mane -->
+    <ellipse cx="2" cy="0" rx="20" ry="22" fill="url(#goldFace)"/>
+    <!-- Face -->
+    <ellipse cx="5" cy="2" rx="14" ry="16" fill="#f5e6a3"/>
+    <!-- Snout -->
+    <ellipse cx="10" cy="8" rx="8" ry="7" fill="#e8d890"/>
+    <!-- Nose -->
+    <ellipse cx="14" cy="4" rx="4" ry="3.5" fill="#1e3a5f"/>
+    <!-- Eye -->
+    <ellipse cx="8" cy="-4" rx="3.5" ry="3" fill="#1e3a5f"/>
+    <ellipse cx="9" cy="-4.5" rx="1.2" ry="1.2" fill="white"/>
+    <!-- Mouth line -->
+    <path d="M 10,11 Q 14,14 18,10" fill="none" stroke="#8B7355" stroke-width="1"/>
+    <!-- Chin -->
+    <ellipse cx="10" cy="14" rx="4" ry="3" fill="#e8d890"/>
+    <!-- Ear -->
+    <ellipse cx="-5" cy="-10" rx="4" ry="5" fill="url(#goldFace)" stroke="#b8860b" stroke-width="0.5"/>
   </g>
 
-  <!-- Gear Left -->
-  <g transform="translate(145, 155)" opacity="0.85">
-    <circle cx="0" cy="0" r="45" fill="#d4a017" stroke="#b8860b" stroke-width="2"/>
-    <g stroke="#d4a017" stroke-width="14" stroke-linecap="butt">
-      <line x1="0" y1="-45" x2="0" y2="-58"/>
-      <line x1="0" y1="45" x2="0" y2="58"/>
-      <line x1="-45" y1="0" x2="-58" y2="0"/>
-      <line x1="45" y1="0" x2="58" y2="0"/>
-      <line x1="-32" y1="-32" x2="-41" y2="-41"/>
-      <line x1="32" y1="-32" x2="41" y2="-41"/>
-      <line x1="-32" y1="32" x2="-41" y2="41"/>
-      <line x1="32" y1="32" x2="41" y2="41"/>
-    </g>
-    <circle cx="0" cy="0" r="28" fill="none" stroke="#b8860b" stroke-width="2"/>
-    <circle cx="0" cy="0" r="16" fill="#1b2a4a"/>
-    <circle cx="0" cy="0" r="8" fill="#f5d76e"/>
+  <!-- ==================== STOPWATCH ==================== -->
+  <g transform="translate(300, 95)">
+    <!-- Top loop/handle -->
+    <path d="M -12,-35 C -12,-50 12,-50 12,-35 L 8,-35 C 8,-44 -8,-44 -8,-35 Z" fill="url(#goldGrad)"/>
+    <!-- Ring connector -->
+    <rect x="-4" y="-35" width="8" height="10" fill="#b8860b"/>
+    
+    <!-- Side buttons -->
+    <rect x="-30" y="-20" width="8" height="12" rx="2" fill="#b8860b"/>
+    <rect x="22" y="-20" width="8" height="12" rx="2" fill="#b8860b"/>
+    
+    <!-- Watch body outer gold -->
+    <circle cx="0" cy="0" r="42" fill="url(#goldGrad)" stroke="#b8860b" stroke-width="2"/>
+    <!-- Watch body inner -->
+    <circle cx="0" cy="0" r="35" fill="#f5f5f0"/>
+    <!-- Inner ring -->
+    <circle cx="0" cy="0" r="32" fill="none" stroke="#ddd" stroke-width="0.5"/>
+    
+    <!-- Hour markers -->
+    <line x1="0" y1="-30" x2="0" y2="-25" stroke="#333" stroke-width="2"/>
+    <line x1="21" y1="-21" x2="17.5" y2="-17.5" stroke="#333" stroke-width="1.5"/>
+    <line x1="30" y1="0" x2="25" y2="0" stroke="#333" stroke-width="2"/>
+    <line x1="21" y1="21" x2="17.5" y2="17.5" stroke="#333" stroke-width="1.5"/>
+    <line x1="0" y1="30" x2="0" y2="25" stroke="#333" stroke-width="2"/>
+    <line x1="-21" y1="21" x2="-17.5" y2="17.5" stroke="#333" stroke-width="1.5"/>
+    <line x1="-30" y1="0" x2="-25" y2="0" stroke="#333" stroke-width="2"/>
+    <line x1="-21" y1="-21" x2="-17.5" y2="-17.5" stroke="#333" stroke-width="1.5"/>
+    
+    <!-- Small ticks -->
+    <line x1="0" y1="-30" x2="0" y2="-28" stroke="#666" stroke-width="0.8" transform="rotate(30)"/>
+    <line x1="0" y1="-30" x2="0" y2="-28" stroke="#666" stroke-width="0.8" transform="rotate(60)"/>
+    <line x1="0" y1="-30" x2="0" y2="-28" stroke="#666" stroke-width="0.8" transform="rotate(120)"/>
+    <line x1="0" y1="-30" x2="0" y2="-28" stroke="#666" stroke-width="0.8" transform="rotate(150)"/>
+    <line x1="0" y1="-30" x2="0" y2="-28" stroke="#666" stroke-width="0.8" transform="rotate(210)"/>
+    <line x1="0" y1="-30" x2="0" y2="-28" stroke="#666" stroke-width="0.8" transform="rotate(240)"/>
+    <line x1="0" y1="-30" x2="0" y2="-28" stroke="#666" stroke-width="0.8" transform="rotate(300)"/>
+    <line x1="0" y1="-30" x2="0" y2="-28" stroke="#666" stroke-width="0.8" transform="rotate(330)"/>
+    
+    <!-- Orange needle/hand pointing at ~2 o'clock -->
+    <line x1="0" y1="5" x2="18" y2="-18" stroke="#e87e28" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Dark center pivot -->
+    <circle cx="0" cy="0" r="4" fill="#1e3a5f"/>
+    <circle cx="0" cy="0" r="2" fill="#333"/>
   </g>
 
-  <!-- Lion Head Right -->
-  <g transform="translate(355, 150)">
-    <ellipse cx="0" cy="5" rx="38" ry="40" fill="url(#lionGrad)" stroke="#b8860b" stroke-width="2"/>
-    <g fill="#d4a017" stroke="#b8860b" stroke-width="1">
-      <polygon points="0,-42 -8,-55 8,-55"/>
-      <polygon points="30,-30 40,-42 42,-30"/>
-      <polygon points="35,0 48,-5 45,8"/>
-      <polygon points="30,30 42,35 35,42"/>
-      <polygon points="0,42 -5,55 5,55"/>
-      <polygon points="-30,30 -42,35 -35,42"/>
-      <polygon points="-35,0 -48,-5 -45,8"/>
-      <polygon points="-30,-30 -40,-42 -42,-30"/>
-    </g>
-    <ellipse cx="0" cy="5" rx="24" ry="28" fill="#f5d76e" stroke="#b8860b" stroke-width="1.5"/>
-    <ellipse cx="0" cy="12" rx="14" ry="16" fill="#fae8a8" stroke="#d4a017" stroke-width="1"/>
-    <polygon points="0,6 -7,14 7,14" fill="#1b2a4a"/>
-    <ellipse cx="-10" cy="-2" rx="5" ry="6" fill="#1b2a4a"/>
-    <ellipse cx="10" cy="-2" rx="5" ry="6" fill="#1b2a4a"/>
-    <circle cx="-9" cy="-3" r="2" fill="#fff"/>
-    <circle cx="11" cy="-3" r="2" fill="#fff"/>
-    <path d="M-8 20 Q0 28 8 20" fill="none" stroke="#1b2a4a" stroke-width="1.5" stroke-linecap="round"/>
-    <path d="M-16 -10 Q-10 -15 -4 -10" fill="none" stroke="#b8860b" stroke-width="2" stroke-linecap="round"/>
-    <path d="M16 -10 Q10 -15 4 -10" fill="none" stroke="#b8860b" stroke-width="2" stroke-linecap="round"/>
+  <!-- ==================== "Med" TEXT ==================== -->
+  <!-- The "M" - huge, dark blue, sticking out left -->
+  <text x="300" y="355" font-family="Arial Black, Arial, sans-serif" font-size="130" 
+        font-weight="900" fill="#1e3a5f" text-anchor="middle" letter-spacing="-8">M</text>
+  
+  <!-- The "ed" - huge, dark blue, sticking out right -->
+  <text x="445" y="355" font-family="Arial Black, Arial, sans-serif" font-size="130" 
+        font-weight="900" fill="#1e3a5f" text-anchor="middle" letter-spacing="-8">ed</text>
+
+  <!-- ==================== GEAR-CLOCK replacing "o" ==================== -->
+  <g transform="translate(348, 320)">
+    <!-- Dark blue gear -->
+    <path d="M 0,-34 L 5,-26 A 24,24 0 0,1 13,-20 L 22,-24 L 26,-14 L 18,-8 A 24,24 0 0,1 19,0 L 28,4 L 25,14 L 15,12A 24,24 0 0,1 8,20 L 12,30 L 2,34 L -2,24A 24,24 0 0,1 -10,20 L -18,26 L -24,18 L -14,10A 24,24 0 0,1 -17,0 L -26,-3 L -23,-14 L -13,-12A 24,24 0 0,1 -8,-20 L -12,-30 L -2,-34 Z" fill="#1e3a5f"/>
+    <!-- Gold rim -->
+    <circle cx="0" cy="0" r="19" fill="none" stroke="#d4a017" stroke-width="3"/>
+    <!-- White clock face -->
+    <circle cx="0" cy="0" r="16" fill="white"/>
+    <!-- Clock ticks -->
+    <line x1="0" y1="-14" x2="0" y2="-11" stroke="#333" stroke-width="1.5"/>
+    <line x1="10" y1="-10" x2="8" y2="-8" stroke="#333" stroke-width="1"/>
+    <line x1="14" y1="0" x2="11" y2="0" stroke="#333" stroke-width="1.5"/>
+    <line x1="10" y1="10" x2="8" y2="8" stroke="#333" stroke-width="1"/>
+    <line x1="0" y1="14" x2="0" y2="11" stroke="#333" stroke-width="1.5"/>
+    <line x1="-10" y1="10" x2="-8" y2="8" stroke="#333" stroke-width="1"/>
+    <line x1="-14" y1="0" x2="-11" y2="0" stroke="#333" stroke-width="1.5"/>
+    <line x1="-10" y1="-10" x2="-8" y2="-8" stroke="#333" stroke-width="1"/>
+    <!-- Clock hands -->
+    <line x1="0" y1="2" x2="0" y2="-10" stroke="#1e3a5f" stroke-width="2" stroke-linecap="round"/>
+    <line x1="0" y1="2" x2="8" y2="-3" stroke="#e87e28" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Center dot -->
+    <circle cx="0" cy="0" r="3" fill="#1e3a5f"/>
+    <circle cx="0" cy="0" r="1.5" fill="#333"/>
   </g>
 
-  <!-- Text: Med -->
-  <g transform="translate(250, 320)">
-    <text x="-105" y="25" font-family="Arial Black, Helvetica Neue, Helvetica, sans-serif" font-size="100" font-weight="900" fill="#1b2a4a" text-anchor="middle">M</text>
-    <text x="85" y="25" font-family="Arial Black, Helvetica Neue, Helvetica, sans-serif" font-size="100" font-weight="900" fill="#1b2a4a" text-anchor="middle">ed</text>
-    <g transform="translate(-8, -8)">
-      <g fill="#1b2a4a">
-        <rect x="-4" y="-38" width="8" height="14" rx="1"/>
-        <rect x="-4" y="24" width="8" height="14" rx="1"/>
-        <rect x="-38" y="-4" width="14" height="8" rx="1"/>
-        <rect x="24" y="-4" width="14" height="8" rx="1"/>
-        <rect x="-28" y="-28" width="10" height="10" rx="1" transform="rotate(45 -23 -23)"/>
-        <rect x="18" y="-28" width="10" height="10" rx="1" transform="rotate(45 23 -23)"/>
-        <rect x="-28" y="18" width="10" height="10" rx="1" transform="rotate(45 -23 23)"/>
-        <rect x="18" y="18" width="10" height="10" rx="1" transform="rotate(45 23 23)"/>
-      </g>
-      <circle cx="0" cy="0" r="28" fill="#1b2a4a" stroke="#f5d76e" stroke-width="2"/>
-      <circle cx="0" cy="0" r="20" fill="#fff"/>
-      <line x1="0" y1="-16" x2="0" y2="-12" stroke="#1b2a4a" stroke-width="2" stroke-linecap="round"/>
-      <line x1="0" y1="16" x2="0" y2="12" stroke="#1b2a4a" stroke-width="2" stroke-linecap="round"/>
-      <line x1="-16" y1="0" x2="-12" y2="0" stroke="#1b2a4a" stroke-width="2" stroke-linecap="round"/>
-      <line x1="16" y1="0" x2="12" y2="0" stroke="#1b2a4a" stroke-width="2" stroke-linecap="round"/>
-      <line x1="0" y1="0" x2="0" y2="-12" stroke="#1b2a4a" stroke-width="2" stroke-linecap="round"/>
-      <line x1="0" y1="0" x2="10" y2="6" stroke="#e8872d" stroke-width="1.5" stroke-linecap="round"/>
-      <circle cx="0" cy="0" r="3" fill="#1b2a4a"/>
-      <circle cx="0" cy="0" r="1.5" fill="#e8872d"/>
-    </g>
+  <!-- ==================== SUBTITLE ==================== -->
+  <text x="300" y="410" font-family="Arial, sans-serif" font-size="32" 
+        font-weight="bold" fill="#1e3a5f" text-anchor="middle" letter-spacing="1">Tijdregistratiesysteem</text>
+
+  <!-- ==================== BOTTOM GEAR ELEMENTS ==================== -->
+  <!-- Center large gear with speedometer -->
+  <g transform="translate(300, 458)">
+    <!-- Large dark blue gear -->
+    <path d="M 0,-32 L 4,-24 A 22,22 0 0,1 12,-18 L 20,-22 L 24,-14 L 16,-8 A 22,22 0 0,1 18,0 L 26,4 L 23,14 L 14,12A 22,22 0 0,1 8,20 L 12,28 L 3,32 L 0,24A 22,22 0 0,1 -8,20 L -16,26 L -22,18 L -12,10A 22,22 0 0,1 -16,0 L -24,-3 L -21,-14 L -12,-12A 22,22 0 0,1 -8,-20 L -12,-28 L -3,-32 Z" fill="#1e3a5f"/>
+    <!-- Inner gold circle (speedometer body) -->
+    <circle cx="0" cy="0" r="18" fill="url(#goldGrad)" stroke="#b8860b" stroke-width="1"/>
+    <!-- White inner face -->
+    <circle cx="0" cy="0" r="14" fill="white"/>
+    <!-- Speedometer arc -->
+    <path d="M -10,6 A 12,12 0 1,1 10,6" fill="none" stroke="#333" stroke-width="1.5"/>
+    <!-- Tick marks -->
+    <line x1="-8" y1="5" x2="-10" y2="6" stroke="#333" stroke-width="1"/>
+    <line x1="0" y1="-12" x2="0" y2="-14" stroke="#333" stroke-width="1"/>
+    <line x1="8" y1="5" x2="10" y2="6" stroke="#333" stroke-width="1"/>
+    <line x1="-11" y1="-2" x2="-13" y2="-2" stroke="#333" stroke-width="1"/>
+    <line x1="11" y1="-2" x2="13" y2="-2" stroke="#333" stroke-width="1"/>
+    <!-- Orange needle pointing right-up -->
+    <line x1="0" y1="2" x2="9" y2="-7" stroke="#e87e28" stroke-width="2" stroke-linecap="round"/>
+    <!-- Center -->
+    <circle cx="0" cy="0" r="3.5" fill="#1e3a5f"/>
+    <circle cx="0" cy="0" r="1.5" fill="#e87e28"/>
   </g>
 
-  <!-- Text: Tijdregistratiesysteem -->
-  <text x="250" y="385" font-family="Arial, Helvetica Neue, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#1b2a4a" text-anchor="middle" letter-spacing="1">Tijdregistratiesysteem</text>
-
-  <!-- Bottom Small Shield -->
-  <g transform="translate(250, 475)">
-    <path d="M0 -45 L55 -25 L55 10 Q55 35 0 55 Q-55 35 -55 10 L-55 -25 Z" fill="#1b2a4a" stroke="#d4a017" stroke-width="4" stroke-linejoin="round"/>
-    <path d="M0 -38 L48 -20 L48 8 Q48 30 0 48 Q-48 30 -48 8 L-48 -20 Z" fill="none" stroke="#f5d76e" stroke-width="1.5" opacity="0.5"/>
-    <g transform="translate(0, 5)">
-      <path d="M-32 8 A35 35 0 1 1 32 8" fill="none" stroke="#d4a017" stroke-width="6" stroke-linecap="round"/>
-      <path d="M15 -22 A35 35 0 0 1 32 8" fill="none" stroke="#e8872d" stroke-width="6" stroke-linecap="round"/>
-      <g stroke="#f5d76e" stroke-width="2" stroke-linecap="round">
-        <line x1="0" y1="-30" x2="0" y2="-24"/>
-        <line x1="21" y1="-21" x2="17" y2="-16"/>
-        <line x1="30" y1="0" x2="24" y2="0"/>
-        <line x1="21" y1="21" x2="17" y2="16"/>
-        <line x1="-21" y1="-21" x2="-17" y2="-16"/>
-        <line x1="-30" y1="0" x2="-24" y2="0"/>
-        <line x1="-21" y1="21" x2="-17" y2="16"/>
-      </g>
-      <line x1="0" y1="0" x2="20" y2="-20" stroke="#e8872d" stroke-width="2.5" stroke-linecap="round"/>
-      <circle cx="0" cy="0" r="5" fill="#d4a017" stroke="#f5d76e" stroke-width="1.5"/>
-      <circle cx="0" cy="0" r="2.5" fill="#1b2a4a"/>
-    </g>
-    <g transform="translate(-40, 5)">
-      <circle cx="0" cy="0" r="14" fill="#d4a017" stroke="#b8860b" stroke-width="1.5"/>
-      <circle cx="0" cy="0" r="8" fill="#1b2a4a"/>
-      <circle cx="0" cy="0" r="4" fill="#f5d76e"/>
-      <line x1="0" y1="-14" x2="0" y2="-19" stroke="#d4a017" stroke-width="4" stroke-linecap="round"/>
-      <line x1="0" y1="14" x2="0" y2="19" stroke="#d4a017" stroke-width="4" stroke-linecap="round"/>
-      <line x1="-14" y1="0" x2="-19" y2="0" stroke="#d4a017" stroke-width="4" stroke-linecap="round"/>
-      <line x1="14" y1="0" x2="19" y2="0" stroke="#d4a017" stroke-width="4" stroke-linecap="round"/>
-    </g>
-    <g transform="translate(40, 5)">
-      <circle cx="0" cy="0" r="14" fill="#e8872d" stroke="#c9731a" stroke-width="1.5"/>
-      <circle cx="0" cy="0" r="8" fill="#1b2a4a"/>
-      <circle cx="0" cy="0" r="4" fill="#f5d76e"/>
-      <line x1="0" y1="-14" x2="0" y2="-19" stroke="#e8872d" stroke-width="4" stroke-linecap="round"/>
-      <line x1="0" y1="14" x2="0" y2="19" stroke="#e8872d" stroke-width="4" stroke-linecap="round"/>
-      <line x1="-14" y1="0" x2="-19" y2="0" stroke="#e8872d" stroke-width="4" stroke-linecap="round"/>
-      <line x1="14" y1="0" x2="19" y2="0" stroke="#e8872d" stroke-width="4" stroke-linecap="round"/>
-    </g>
+  <!-- Bottom left small gold gear -->
+  <g transform="translate(235, 448)">
+    <path d="M 0,-14 L 2.5,-10.5 A 10,10 0 0,1 6.5,-8.5 L 10,-10 L 12.5,-6 L 9,-3.5 A 10,10 0 0,1 9.5,0 L 13,2 L 11.5,6.5 L 7.5,5.5 A 10,10 0 0,1 4,9 L 6,13 L 1.5,14.5 L 0,10.5A 10,10 0 0,1 -4,9 L -8.5,12 L -11,8 L -7,5A 10,10 0 0,1 -8,0 L -12,-1.5 L -10.5,-6 L -6.5,-5A 10,10 0 0,1 -4,-8 L -6,-12 L -1.5,-13.5 Z" fill="url(#goldGrad)"/>
+    <circle cx="0" cy="0" r="5" fill="#8B4513" opacity="0.25"/>
   </g>
+
+  <!-- Bottom right small gold gear -->
+  <g transform="translate(365, 448)">
+    <path d="M 0,-14 L 2.5,-10.5 A 10,10 0 0,1 6.5,-8.5 L 10,-10 L 12.5,-6 L 9,-3.5 A 10,10 0 0,1 9.5,0 L 13,2 L 11.5,6.5 L 7.5,5.5 A 10,10 0 0,1 4,9 L 6,13 L 1.5,14.5 L 0,10.5A 10,10 0 0,1 -4,9 L -8.5,12 L -11,8 L -7,5A 10,10 0 0,1 -8,0 L -12,-1.5 L -10.5,-6 L -6.5,-5A 10,10 0 0,1 -4,-8 L -6,-12 L -1.5,-13.5 Z" fill="url(#goldGrad)"/>
+    <circle cx="0" cy="0" r="5" fill="#8B4513" opacity="0.25"/>
+  </g>
+
 </svg>
