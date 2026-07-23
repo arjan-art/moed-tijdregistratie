@@ -10,6 +10,28 @@ import AdminWorkZones from './pages/admin/WorkZones'
 import AdminManagement from './pages/admin/AdminManagement'
 import AdminSettings from './pages/admin/Settings'
 import AdminLayout from './components/AdminLayout'
+import { getAdmins, addAdmin } from './lib/db'
+
+// Seed default admin if none exists
+async function seedDefaultAdmin() {
+  try {
+    const admins = await getAdmins()
+    if (admins.length === 0) {
+      await addAdmin({
+        name: 'Admin',
+        email: 'admin@moed.nl',
+        password: 'admin123',
+        role: 'superadmin',
+      })
+      console.log('[MOED] Default admin account created')
+    }
+  } catch (err) {
+    console.error('[MOED] Seed error:', err)
+  }
+}
+
+// Run seed on module load
+seedDefaultAdmin()
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const [auth, setAuth] = useState<boolean | null>(null)
