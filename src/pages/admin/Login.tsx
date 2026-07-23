@@ -1,119 +1,136 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { LogIn, Eye, EyeOff } from 'lucide-react';
-import { seedData, validateAdmin, setSession } from '@/lib/db';
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { ShieldCheck, Eye, EyeOff, AlertCircle, Timer } from 'lucide-react'
+import { getAdminByEmail } from '@/lib/db'
 
-export function AdminLogin() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPass, setShowPass] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+export default function AdminLogin() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
-  seedData();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+    if (!email.trim() || !password.trim()) {
+      setError('Vul alle velden in.')
+      setLoading(false)
+      return
+    }
 
-    setTimeout(() => {
-      const admin = validateAdmin(email, password);
-      if (admin) {
-        setSession(admin);
-        navigate('/admin/dashboard');
+    try {
+      const admin = await getAdminByEmail(email.trim())
+      if (admin && admin.password === password) {
+        sessionStorage.setItem('moed_admin_session', JSON.stringify({
+          id: admin.id,
+          name: admin.name,
+          email: admin.email,
+          role: admin.role,
+        }))
+        navigate('/admin/dashboard')
       } else {
-        setError('Ongeldige e-mail of wachtwoord');
+        setError('Ongeldige e-mail of wachtwoord.')
       }
-      setLoading(false);
-    }, 500);
-  };
+    } catch {
+      setError('Er is een fout opgetreden. Probeer opnieuw.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary to-primary-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md"
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <img src="/moed-logo.png" alt="MOED" className="w-20 h-20 mx-auto mb-4 rounded-2xl" />
-          <h1 className="text-2xl font-bold text-primary">MOED Admin</h1>
-          <p className="text-gray-500 text-sm">Log in op het beheersysteem</p>
+          <div className="w-16 h-16 rounded-2xl bg-brand-500 flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <Timer className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">MOED Admin</h1>
+          <p className="text-muted-foreground mt-1">Log in om door te gaan</p>
         </div>
 
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl mb-4 text-sm"
-          >
-            {error}
-          </motion.div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">E-mailadres</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="admin@moed.nl"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-              required
-            />
+        <div className="bg-card rounded-2xl border border-border shadow-sm p-8">
+          <div className="flex items-center gap-2 mb-6">
+            <ShieldCheck className="w-5 h-5 text-brand-600" />
+            <h2 className="text-lg font-semibold">Beheerders Login</h2>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Wachtwoord</label>
-            <div className="relative">
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">E-mailadres</label>
               <input
-                type={showPass ? 'text' : 'password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••"
-                className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                required
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@moed.nl"
+                className="w-full px-4 py-3 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-all"
+                autoComplete="email"
               />
-              <button
-                type="button"
-                onClick={() => setShowPass(!showPass)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
             </div>
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-primary hover:bg-primary-700 text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            {loading ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <>
-                <LogIn className="w-5 h-5" />
-                Inloggen
-              </>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Wachtwoord</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-4 py-3 pr-12 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-all"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="flex items-center gap-2 p-3 rounded-xl bg-red-50 text-red-600 text-sm"
+              >
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                {error}
+              </motion.div>
             )}
-          </button>
-        </form>
 
-        <div className="mt-6 text-center">
-          <a href="#/" className="text-sm text-primary hover:underline">
-            Terug naar medewerker login
-          </a>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-xl bg-brand-600 text-white font-semibold text-sm hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  Bezig...
+                </span>
+              ) : (
+                'Inloggen'
+              )}
+            </button>
+          </form>
         </div>
 
-        <div className="mt-6 p-4 bg-gray-50 rounded-xl text-xs text-gray-500">
-          <p className="font-medium text-gray-700 mb-1">Demo inloggegevens:</p>
-          <p>E-mail: admin@moed.nl</p>
-          <p>Wachtwoord: admin123</p>
-        </div>
+        <p className="text-center text-xs text-muted-foreground mt-6">
+          &copy; {new Date().getFullYear()} Viento Circulair BV
+        </p>
       </motion.div>
     </div>
-  );
+  )
 }
