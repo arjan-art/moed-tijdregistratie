@@ -1,172 +1,358 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Plus, Pencil, Trash2, X, Check, AlertCircle } from 'lucide-react';
-import { getEmployees, addEmployee, updateEmployee, deleteEmployee, getWorkZones, type Employee } from '@/lib/db';
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  Users,
+  Search,
+  Plus,
+  Pencil,
+  Trash2,
+  X,
+  Check,
+  MapPin,
+} from 'lucide-react'
+import { getEmployees, addEmployee, updateEmployee, deleteEmployee, getWorkZones } from '@/lib/db'
+import type { Employee, WorkZone } from '@/lib/db'
 
-export function AdminEmployees() {
-  const [employees, setEmployees] = useState<Employee[]>(getEmployees());
-  const [editing, setEditing] = useState<Employee | null>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: '', pin: '', email: '', phone: '', workZoneId: '', active: true });
-  const [error, setError] = useState('');
+function generatePin(): string {
+  return Math.floor(1000 + Math.random() * 9000).toString()
+}
 
-  const zones = getWorkZones();
-  const refresh = () => setEmployees(getEmployees());
+export default function AdminEmployees() {
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [workZones, setWorkZones] = useState<WorkZone[]>([])
+  const [search, setSearch] = useState('')
+  const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    pin: '',
+    role: 'werknemer' as 'werknemer' | 'manager',
+    status: 'actief' as 'actief' | 'inactief',
+    work_zone_id: '',
+  })
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  async function loadData() {
+    setLoading(true)
+    const [emps, zones] = await Promise.all([getEmployees(), getWorkZones()])
+    setEmployees(emps)
+    setWorkZones(zones)
+    setLoading(false)
+  }
+
+  const filteredEmployees = employees.filter(
+    (e) =>
+      e.name.toLowerCase().includes(search.toLowerCase()) ||
+      e.email.toLowerCase().includes(search.toLowerCase()) ||
+      e.pin.includes(search)
+  )
 
   const resetForm = () => {
-    setForm({ name: '', pin: '', email: '', phone: '', workZoneId: zones[0]?.id || '', active: true });
-    setEditing(null);
-    setError('');
-  };
+    setFormData({
+      name: '',
+      email: '',
+      pin: '',
+      role: 'werknemer',
+      status: 'actief',
+      work_zone_id: '',
+    })
+    setEditingId(null)
+    setShowForm(false)
+  }
 
-  const handleAdd = () => { resetForm(); setShowForm(true); };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!formData.name.trim() || !formData.email.trim() || !formData.pin.trim()) return
+
+    if (editingId) {
+      await updateEmployee(editingId, formData)
+    } else {
+      await addEmployee(formData)
+    }
+    resetForm()
+    await loadData()
+  }
 
   const handleEdit = (emp: Employee) => {
-    setEditing(emp);
-    setForm({ name: emp.name, pin: emp.pin, email: emp.email, phone: emp.phone || '', workZoneId: emp.workZoneId, active: emp.active });
-    setShowForm(true);
-  };
+    setFormData({
+      name: emp.name,
+      email: emp.email,
+      pin: emp.pin,
+      role: emp.role,
+      status: emp.status,
+      work_zone_id: emp.work_zone_id || '',
+    })
+    setEditingId(emp.id)
+    setShowForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Weet u zeker dat u deze werknemer wilt verwijderen?')) {
-      deleteEmployee(id);
-      refresh();
-    }
-  };
+  const handleDelete = async (id: string) => {
+    await deleteEmployee(id)
+    setDeleteConfirm(null)
+    await loadData()
+  }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    if (!form.name.trim()) { setError('Naam is verplicht'); return; }
-    if (!form.pin || form.pin.length !== 4) { setError('PIN moet 4 cijfers bevatten'); return; }
-    if (!form.email.trim()) { setError('E-mail is verplicht'); return; }
-    const dupPin = getEmployees().find(e => e.pin === form.pin && e.id !== editing?.id);
-    if (dupPin) { setError('Deze PIN is al in gebruik'); return; }
-
-    if (editing) {
-      updateEmployee(editing.id, { name: form.name.trim(), pin: form.pin, email: form.email.trim(), phone: form.phone.trim(), workZoneId: form.workZoneId, active: form.active });
-    } else {
-      addEmployee({ name: form.name.trim(), pin: form.pin, email: form.email.trim(), phone: form.phone.trim(), workZoneId: form.workZoneId || zones[0]?.id || '', active: form.active });
-    }
-    refresh();
-    setShowForm(false);
-    resetForm();
-  };
+  const handleGeneratePin = () => {
+    setFormData({ ...formData, pin: generatePin() })
+  }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <h1 className="text-2xl font-bold text-gray-900">Werknemers</h1>
-          <p className="text-gray-500">Beheer medewerkers en hun werkzones</p>
-        </motion.div>
-        <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-          onClick={handleAdd} className="bg-primary hover:bg-primary-700 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 transition-colors shadow-sm">
-          <Plus className="w-5 h-5" />
-          <span className="hidden sm:inline">Werknemer toevoegen</span>
-        </motion.button>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Werknemers</h1>
+          <p className="text-muted-foreground mt-1">Beheer alle medewerkers</p>
+        </div>
+        <button
+          onClick={() => { resetForm(); setShowForm(!showForm); }}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors shadow-sm"
+        >
+          {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+          {showForm ? 'Annuleren' : 'Werknemer Toevoegen'}
+        </button>
       </div>
 
+      {/* Form */}
       <AnimatePresence>
         {showForm && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden mb-6">
-            <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-gray-900">{editing ? 'Werknemer bewerken' : 'Nieuwe werknemer'}</h2>
-                <button type="button" onClick={() => { setShowForm(false); resetForm(); }} className="p-1 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5 text-gray-500" /></button>
-              </div>
-              {error && (
-                <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl mb-4 text-sm flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4" />{error}
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+              <h3 className="text-lg font-semibold mb-4">
+                {editingId ? 'Werknemer Bewerken' : 'Nieuwe Werknemer'}
+              </h3>
+              <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Naam</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Volledige naam"
+                    className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    required
+                  />
                 </div>
-              )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Naam *</label>
-                  <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="Jan de Vries" />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">E-mail</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="e-mail@bedrijf.nl"
+                    className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    required
+                  />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">PIN code (4 cijfers) *</label>
-                  <input type="text" maxLength={4} value={form.pin} onChange={e => setForm({ ...form, pin: e.target.value.replace(/\D/g, '') })} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="1234" />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">PIN Code</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={formData.pin}
+                      onChange={(e) => setFormData({ ...formData, pin: e.target.value.replace(/\D/g, '').slice(0, 4) })}
+                      placeholder="4 cijfers"
+                      maxLength={4}
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={handleGeneratePin}
+                      className="px-3 py-2.5 rounded-xl border border-border bg-muted text-sm hover:bg-muted/80 transition-colors"
+                    >
+                      Genereer
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">E-mail *</label>
-                  <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="jan@moed.nl" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Telefoon</label>
-                  <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="0612345678" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Werkzone</label>
-                  <select value={form.workZoneId} onChange={e => setForm({ ...form, workZoneId: e.target.value })} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-                    {zones.map(z => (<option key={z.id} value={z.id}>{z.name}</option>))}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Rol</label>
+                  <select
+                    value={formData.role}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value as 'werknemer' | 'manager' })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="werknemer">Werknemer</option>
+                    <option value="manager">Manager</option>
                   </select>
                 </div>
-                <div className="flex items-center">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={form.active} onChange={e => setForm({ ...form, active: e.target.checked })} className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary" />
-                    <span className="text-sm text-gray-700">Actief</span>
-                  </label>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Status</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as 'actief' | 'inactief' })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="actief">Actief</option>
+                    <option value="inactief">Inactief</option>
+                  </select>
                 </div>
-              </div>
-              <div className="mt-4 flex gap-3">
-                <button type="submit" className="bg-primary hover:bg-primary-700 text-white px-6 py-2.5 rounded-xl font-medium transition-colors">{editing ? 'Wijzigingen opslaan' : 'Toevoegen'}</button>
-                <button type="button" onClick={() => { setShowForm(false); resetForm(); }} className="px-6 py-2.5 rounded-xl font-medium text-gray-600 hover:bg-gray-100 transition-colors">Annuleren</button>
-              </div>
-            </form>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Werkzone</label>
+                  <select
+                    value={formData.work_zone_id}
+                    onChange={(e) => setFormData({ ...formData, work_zone_id: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">Geen zone</option>
+                    {workZones.map((zone) => (
+                      <option key={zone.id} value={zone.id}>{zone.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="sm:col-span-2 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="px-4 py-2.5 rounded-xl border border-border bg-background text-sm font-medium hover:bg-muted transition-colors"
+                  >
+                    Annuleren
+                  </button>
+                  <button
+                    type="submit"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 transition-colors"
+                  >
+                    <Check className="w-4 h-4" />
+                    {editingId ? 'Opslaan' : 'Toevoegen'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Zoek op naam, e-mail of PIN..."
+          className="w-full sm:w-80 pl-10 pr-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+      </div>
+
+      {/* Table */}
+      <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-100">
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Naam</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">E-mail</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase hidden md:table-cell">PIN</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase hidden lg:table-cell">Werkzone</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase">Acties</th>
+              <tr className="border-b border-border bg-muted/50">
+                <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Naam</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">E-mail</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">PIN</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rol</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Zone</th>
+                <th className="text-right px-6 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Acties</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
-              {employees.map((emp, idx) => (
-                <motion.tr key={emp.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: idx * 0.03 }} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">{emp.name.charAt(0)}</div>
-                      <span className="font-medium text-gray-900">{emp.name}</span>
-                    </div>
+            <tbody className="divide-y divide-border">
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-500 mx-auto" />
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{emp.email}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600 hidden md:table-cell">{emp.pin}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600 hidden lg:table-cell">{zones.find(z => z.id === emp.workZoneId)?.name || 'Onbekend'}</td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${emp.active ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
-                      {emp.active ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}{emp.active ? 'Actief' : 'Inactief'}
-                    </span>
+                </tr>
+              ) : filteredEmployees.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
+                    <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    Geen werknemers gevonden
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => handleEdit(emp)} className="p-2 text-gray-500 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"><Pencil className="w-4 h-4" /></button>
-                      <button onClick={() => handleDelete(emp.id)} className="p-2 text-gray-500 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
-              {employees.length === 0 && (
-                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                  <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                  <p>Geen werknemers gevonden</p>
-                </td></tr>
+                </tr>
+              ) : (
+                filteredEmployees.map((emp) => (
+                  <motion.tr
+                    key={emp.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="hover:bg-muted/30 transition-colors"
+                  >
+                    <td className="px-6 py-4 text-sm font-medium">{emp.name}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{emp.email}</td>
+                    <td className="px-6 py-4 text-sm font-mono">{emp.pin}</td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                        emp.role === 'manager'
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'bg-muted text-muted-foreground'
+                      }`}>
+                        {emp.role === 'manager' ? 'Manager' : 'Werknemer'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                        emp.status === 'actief'
+                          ? 'bg-green-50 text-green-700'
+                          : 'bg-red-50 text-red-600'
+                      }`}>
+                        {emp.status === 'actief' ? 'Actief' : 'Inactief'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">
+                      {emp.work_zone_id ? (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          {workZones.find(z => z.id === emp.work_zone_id)?.name || emp.work_zone_id}
+                        </span>
+                      ) : (
+                        '-'
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleEdit(emp)}
+                          className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        {deleteConfirm === emp.id ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleDelete(emp.id)}
+                              className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirm(null)}
+                              className="p-2 rounded-lg hover:bg-muted transition-colors"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setDeleteConfirm(emp.id)}
+                            className="p-2 rounded-lg hover:bg-red-50 transition-colors text-muted-foreground hover:text-red-500"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))
               )}
             </tbody>
           </table>
         </div>
       </div>
     </div>
-  );
+  )
 }
