@@ -1,112 +1,277 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Building2, Save, RotateCcw, AlertTriangle } from 'lucide-react';
-import { getCompany, updateCompany, resetAllData, type Company } from '@/lib/db';
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import {
+  Building2,
+  Save,
+  CheckCircle2,
+  Globe,
+  Phone,
+  Mail,
+  MapPin,
+  Hash,
+} from 'lucide-react'
+import { getCompany, upsertCompany } from '@/lib/db'
+import type { Company } from '@/lib/db'
 
-export function AdminSettings() {
-  const [company, setCompanyState] = useState<Company>(getCompany());
-  const [saved, setSaved] = useState(false);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
+export default function AdminSettings() {
+  const [company, setCompany] = useState<Company>({
+    id: 'default',
+    name: '',
+    address: '',
+    postal_code: '',
+    city: '',
+    phone: '',
+    email: '',
+    website: '',
+    kvk: '',
+    created_at: '',
+  })
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
 
-  const handleChange = (field: keyof Company, value: string) => {
-    setCompanyState(prev => ({ ...prev, [field]: value }));
-    setSaved(false);
-  };
+  useEffect(() => {
+    loadCompany()
+  }, [])
 
-  const handleSave = () => {
-    updateCompany(company);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  };
+  async function loadCompany() {
+    setLoading(true)
+    const data = await getCompany()
+    if (data) {
+      setCompany(data)
+    }
+    setLoading(false)
+  }
 
-  const handleReset = () => {
-    resetAllData();
-    setCompanyState(getCompany());
-    setShowResetConfirm(false);
-    setSaved(true);
-    setTimeout(() => { setSaved(false); window.location.reload(); }, 1500);
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
+    setSaved(false)
 
-  const fields: { key: keyof Company; label: string; type: string; required?: boolean }[] = [
-    { key: 'name', label: 'Bedrijfsnaam', type: 'text', required: true },
-    { key: 'address', label: 'Adres', type: 'text' },
-    { key: 'postalCode', label: 'Postcode', type: 'text' },
-    { key: 'city', label: 'Plaats', type: 'text' },
-    { key: 'country', label: 'Land', type: 'text' },
-    { key: 'phone', label: 'Telefoon', type: 'tel' },
-    { key: 'email', label: 'E-mail', type: 'email' },
-    { key: 'kvk', label: 'KvK nummer', type: 'text' },
-    { key: 'btw', label: 'BTW nummer', type: 'text' },
-  ];
+    const { id, created_at, ...dataToSave } = company
+    void id
+    void created_at
+
+    await upsertCompany(dataToSave)
+    setSaved(true)
+    setSaving(false)
+    setTimeout(() => setSaved(false), 3000)
+  }
+
+  const updateField = (field: keyof Company, value: string) => {
+    setCompany((prev) => ({ ...prev, [field]: value }))
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500" />
+      </div>
+    )
+  }
 
   return (
-    <div>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Instellingen</h1>
-        <p className="text-gray-500">Beheer bedrijfsgegevens en systeeminstellingen</p>
-      </motion.div>
+    <div className="max-w-3xl space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Instellingen</h1>
+        <p className="text-muted-foreground mt-1">Bedrijfsgegevens en voorkeuren</p>
+      </div>
 
-      {saved && (
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl mb-6 text-sm flex items-center gap-2">
-          <Save className="w-4 h-4" />Wijzigingen succesvol opgeslagen!
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Form */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="lg:col-span-2 bg-card rounded-xl border border-border shadow-sm p-6"
+        >
+          <div className="flex items-center gap-2 mb-6">
+            <Building2 className="w-5 h-5 text-brand-600" />
+            <h2 className="text-lg font-semibold">Bedrijfsgegevens</h2>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-muted-foreground" />
+                Bedrijfsnaam
+              </label>
+              <input
+                type="text"
+                value={company.name}
+                onChange={(e) => updateField('name', e.target.value)}
+                placeholder="Bedrijfsnaam"
+                className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-muted-foreground" />
+                Adres
+              </label>
+              <input
+                type="text"
+                value={company.address}
+                onChange={(e) => updateField('address', e.target.value)}
+                placeholder="Straat en huisnummer"
+                className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Postcode</label>
+                <input
+                  type="text"
+                  value={company.postal_code}
+                  onChange={(e) => updateField('postal_code', e.target.value)}
+                  placeholder="1234 AB"
+                  className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Stad</label>
+                <input
+                  type="text"
+                  value={company.city}
+                  onChange={(e) => updateField('city', e.target.value)}
+                  placeholder="Plaatsnaam"
+                  className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-muted-foreground" />
+                  Telefoon
+                </label>
+                <input
+                  type="tel"
+                  value={company.phone}
+                  onChange={(e) => updateField('phone', e.target.value)}
+                  placeholder="+31 6 12345678"
+                  className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-muted-foreground" />
+                  E-mail
+                </label>
+                <input
+                  type="email"
+                  value={company.email}
+                  onChange={(e) => updateField('email', e.target.value)}
+                  placeholder="info@bedrijf.nl"
+                  className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-muted-foreground" />
+                  Website
+                </label>
+                <input
+                  type="url"
+                  value={company.website}
+                  onChange={(e) => updateField('website', e.target.value)}
+                  placeholder="https://www.bedrijf.nl"
+                  className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Hash className="w-4 h-4 text-muted-foreground" />
+                  KVK Nummer
+                </label>
+                <input
+                  type="text"
+                  value={company.kvk}
+                  onChange={(e) => updateField('kvk', e.target.value)}
+                  placeholder="12345678"
+                  className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 pt-2">
+              <button
+                type="submit"
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 disabled:opacity-50 transition-colors shadow-sm"
+              >
+                {saving ? (
+                  <span className="flex items-center gap-2">
+                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                    Bezig...
+                  </span>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Opslaan
+                  </>
+                )}
+              </button>
+
+              {saved && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="flex items-center gap-2 text-green-600 text-sm font-medium"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  Opgeslagen!
+                </motion.div>
+              )}
+            </div>
+          </form>
         </motion.div>
-      )}
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-            <Building2 className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <h2 className="font-semibold text-gray-900">Bedrijfsgegevens</h2>
-            <p className="text-sm text-gray-500">Deze gegevens worden gebruikt in rapportages</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {fields.map(field => (
-            <div key={field.key}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}{field.required && <span className="text-rose-500 ml-0.5">*</span>}</label>
-              <input type={field.type} value={company[field.key] || ''} onChange={e => handleChange(field.key, e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" />
+        {/* Preview Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-brand-800 text-white rounded-xl shadow-sm p-6"
+        >
+          <h3 className="text-lg font-semibold mb-4">Voorbeeld</h3>
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs text-brand-300 uppercase tracking-wider">Bedrijfsnaam</p>
+              <p className="text-sm font-medium mt-0.5">{company.name || 'Niet ingesteld'}</p>
             </div>
-          ))}
-        </div>
-        <div className="mt-6">
-          <button onClick={handleSave} className="bg-primary hover:bg-primary-700 text-white px-6 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors">
-            <Save className="w-4 h-4" />Opslaan
-          </button>
-        </div>
-      </motion.div>
+            <div>
+              <p className="text-xs text-brand-300 uppercase tracking-wider">Adres</p>
+              <p className="text-sm mt-0.5">{company.address || '-'}</p>
+              <p className="text-sm">{company.postal_code} {company.city}</p>
+            </div>
+            <div>
+              <p className="text-xs text-brand-300 uppercase tracking-wider">Contact</p>
+              <p className="text-sm mt-0.5">{company.phone || '-'}</p>
+              <p className="text-sm">{company.email || '-'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-brand-300 uppercase tracking-wider">Website</p>
+              <p className="text-sm mt-0.5">{company.website || '-'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-brand-300 uppercase tracking-wider">KVK</p>
+              <p className="text-sm mt-0.5">{company.kvk || '-'}</p>
+            </div>
+          </div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-        className="bg-white rounded-xl shadow-sm border border-rose-100 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center">
-            <AlertTriangle className="w-5 h-5 text-rose-500" />
-          </div>
-          <div>
-            <h2 className="font-semibold text-gray-900">Demo data reset</h2>
-            <p className="text-sm text-gray-500">Reset alle data naar de oorspronkelijke demo staat</p>
-          </div>
-        </div>
-        {!showResetConfirm ? (
-          <button onClick={() => setShowResetConfirm(true)} className="bg-rose-50 hover:bg-rose-100 text-rose-700 px-6 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors border border-rose-200">
-            <RotateCcw className="w-4 h-4" />Reset demo data
-          </button>
-        ) : (
-          <div className="bg-rose-50 border border-rose-200 rounded-xl p-4">
-            <p className="text-rose-700 text-sm mb-4 font-medium">
-              Waarschuwing: Dit zal alle werknemers, registraties en instellingen resetten naar de standaard demo data. Deze actie kan niet ongedaan worden gemaakt.
+          <div className="mt-6 pt-4 border-t border-brand-700">
+            <p className="text-xs text-brand-400">
+              Deze gegevens worden gebruikt in rapportages en exporten.
             </p>
-            <div className="flex gap-3">
-              <button onClick={handleReset} className="bg-rose-500 hover:bg-rose-600 text-white px-6 py-2.5 rounded-xl font-medium transition-colors">Ja, reset alles</button>
-              <button onClick={() => setShowResetConfirm(false)} className="px-6 py-2.5 rounded-xl font-medium text-gray-600 hover:bg-gray-100 transition-colors">Annuleren</button>
-            </div>
           </div>
-        )}
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
-  );
+  )
 }
