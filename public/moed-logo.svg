@@ -1,77 +1,178 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 600" width="500" height="600">
   <defs>
-    <!-- Dark blue-purple background gradient -->
-    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" style="stop-color:#2a2a5a;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#1a1a3e;stop-opacity:1" />
-    </radialGradient>
-    <!-- Gold gradient for the M -->
-    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e8872d;stop-opacity:1" />
+      <stop offset="40%" style="stop-color:#d4a017;stop-opacity:1" />
+      <stop offset="40%" style="stop-color:#1b2a4a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f1a30;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#f5d76e;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#e8b931;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#c9940d;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#d4a017;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#b8860b;stop-opacity:1" />
     </linearGradient>
-    <!-- Darker gold for shadow -->
-    <linearGradient id="goldDark" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#c9940d;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#8a5e00;stop-opacity:1" />
-    </linearGradient>
-    <!-- Outer ring gradient -->
-    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="rimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#f5d76e;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#e8b931;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#c9940d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#c9a227;stop-opacity:1" />
     </linearGradient>
-    <!-- Shadow filter -->
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.3"/>
+    <linearGradient id="lionGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f5d76e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d4a017;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.25"/>
     </filter>
   </defs>
 
-  <!-- Outer gold ring -->
-  <circle cx="100" cy="100" r="96" fill="none" stroke="url(#ringGrad)" stroke-width="3"/>
-
-  <!-- Background circle -->
-  <circle cx="100" cy="100" r="93" fill="url(#bgGrad)"/>
-
-  <!-- Inner subtle highlight ring -->
-  <circle cx="100" cy="100" r="88" fill="none" stroke="#3a3a6a" stroke-width="1" opacity="0.5"/>
-
-  <!-- The M / Helmet shape -->
+  <!-- Main Shield -->
   <g filter="url(#shadow)">
-    <!-- Main M shape - stylized like a construction helmet -->
-    <!-- Left pillar -->
-    <path d="M55 140 L55 75 L72 75 L85 105 L85 140 L72 140 L72 105 L65 88 L55 88 Z" 
-          fill="url(#goldGrad)"/>
-    <!-- Right pillar -->
-    <path d="M145 140 L145 75 L128 75 L115 105 L115 140 L128 140 L128 105 L135 88 L145 88 Z" 
-          fill="url(#goldGrad)"/>
-    <!-- Center V dip -->
-    <path d="M72 75 L85 105 L100 65 L115 105 L128 75 L100 55 Z" 
-          fill="url(#goldGrad)"/>
-    
-    <!-- Helmet brim / cap visor at top -->
-    <path d="M45 72 Q100 48 155 72 L155 78 Q100 54 45 78 Z" 
-          fill="url(#goldDark)"/>
-    
-    <!-- Center ridge line on helmet -->
-    <path d="M100 55 L100 65" stroke="#8a5e00" stroke-width="2" stroke-linecap="round"/>
-    
-    <!-- Side ridge lines -->
-    <path d="M78 62 L85 75" stroke="#8a5e00" stroke-width="1.5" stroke-linecap="round"/>
-    <path d="M122 62 L115 75" stroke="#8a5e00" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M250 30 L430 100 L430 280 Q430 380 250 500 Q70 380 70 280 L70 100 Z" fill="#1b2a4a" stroke="#1b2a4a" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M250 38 L422 104 L422 278 Q422 375 250 492 Q78 375 78 278 L78 104 Z" fill="url(#rimGrad)"/>
+    <path d="M250 45 L415 108 L415 276 Q415 370 250 484 Q85 370 85 276 L85 108 Z" fill="url(#shieldGrad)"/>
+    <path d="M250 55 L405 114 L405 274 Q405 362 250 472 Q95 362 95 274 L95 114 Z" fill="none" stroke="#f5d76e" stroke-width="1.5" opacity="0.6"/>
   </g>
 
-  <!-- Highlight on the M -->
-  <path d="M60 80 L68 80 L75 95 L75 100 L60 100 Z" 
-        fill="#ffffff" opacity="0.2"/>
-  <path d="M132 80 L140 80 L140 100 L125 100 L125 95 Z" 
-        fill="#ffffff" opacity="0.2"/>
+  <!-- Stopwatch -->
+  <g transform="translate(250, 110)">
+    <rect x="-6" y="-38" width="12" height="18" rx="3" fill="#d4a017" stroke="#8b6914" stroke-width="1.5"/>
+    <rect x="-8" y="-42" width="16" height="6" rx="2" fill="#f5d76e"/>
+    <rect x="-32" y="-20" width="10" height="14" rx="2" fill="#d4a017" stroke="#8b6914" stroke-width="1"/>
+    <rect x="22" y="-20" width="10" height="14" rx="2" fill="#d4a017" stroke="#8b6914" stroke-width="1"/>
+    <circle cx="0" cy="0" r="42" fill="#f5f5f0" stroke="#d4a017" stroke-width="5"/>
+    <circle cx="0" cy="0" r="36" fill="#fff" stroke="#e0e0e0" stroke-width="1"/>
+    <line x1="0" y1="-30" x2="0" y2="-24" stroke="#1b2a4a" stroke-width="3" stroke-linecap="round"/>
+    <line x1="0" y1="30" x2="0" y2="24" stroke="#1b2a4a" stroke-width="3" stroke-linecap="round"/>
+    <line x1="-30" y1="0" x2="-24" y2="0" stroke="#1b2a4a" stroke-width="3" stroke-linecap="round"/>
+    <line x1="30" y1="0" x2="24" y2="0" stroke="#1b2a4a" stroke-width="3" stroke-linecap="round"/>
+    <line x1="-21" y1="-21" x2="-17" y2="-17" stroke="#1b2a4a" stroke-width="2" stroke-linecap="round"/>
+    <line x1="21" y1="-21" x2="17" y2="-17" stroke="#1b2a4a" stroke-width="2" stroke-linecap="round"/>
+    <line x1="-21" y1="21" x2="-17" y2="17" stroke="#1b2a4a" stroke-width="2" stroke-linecap="round"/>
+    <line x1="21" y1="21" x2="17" y2="17" stroke="#1b2a4a" stroke-width="2" stroke-linecap="round"/>
+    <line x1="0" y1="-30" x2="0" y2="-27" stroke="#888" stroke-width="1" transform="rotate(30)"/>
+    <line x1="0" y1="-30" x2="0" y2="-27" stroke="#888" stroke-width="1" transform="rotate(60)"/>
+    <line x1="0" y1="-30" x2="0" y2="-27" stroke="#888" stroke-width="1" transform="rotate(120)"/>
+    <line x1="0" y1="-30" x2="0" y2="-27" stroke="#888" stroke-width="1" transform="rotate(150)"/>
+    <line x1="0" y1="-30" x2="0" y2="-27" stroke="#888" stroke-width="1" transform="rotate(210)"/>
+    <line x1="0" y1="-30" x2="0" y2="-27" stroke="#888" stroke-width="1" transform="rotate(240)"/>
+    <line x1="0" y1="-30" x2="0" y2="-27" stroke="#888" stroke-width="1" transform="rotate(300)"/>
+    <line x1="0" y1="-30" x2="0" y2="-27" stroke="#888" stroke-width="1" transform="rotate(330)"/>
+    <line x1="0" y1="0" x2="0" y2="-22" stroke="#1b2a4a" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="0" y1="0" x2="18" y2="12" stroke="#e8872d" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="0" cy="0" r="4" fill="#1b2a4a"/>
+    <circle cx="0" cy="0" r="2" fill="#e8872d"/>
+  </g>
 
-  <!-- Bottom base line of helmet -->
-  <rect x="50" y="138" width="100" height="6" rx="3" fill="url(#goldDark)"/>
+  <!-- Gear Left -->
+  <g transform="translate(145, 155)" opacity="0.85">
+    <circle cx="0" cy="0" r="45" fill="#d4a017" stroke="#b8860b" stroke-width="2"/>
+    <g stroke="#d4a017" stroke-width="14" stroke-linecap="butt">
+      <line x1="0" y1="-45" x2="0" y2="-58"/>
+      <line x1="0" y1="45" x2="0" y2="58"/>
+      <line x1="-45" y1="0" x2="-58" y2="0"/>
+      <line x1="45" y1="0" x2="58" y2="0"/>
+      <line x1="-32" y1="-32" x2="-41" y2="-41"/>
+      <line x1="32" y1="-32" x2="41" y2="-41"/>
+      <line x1="-32" y1="32" x2="-41" y2="41"/>
+      <line x1="32" y1="32" x2="41" y2="41"/>
+    </g>
+    <circle cx="0" cy="0" r="28" fill="none" stroke="#b8860b" stroke-width="2"/>
+    <circle cx="0" cy="0" r="16" fill="#1b2a4a"/>
+    <circle cx="0" cy="0" r="8" fill="#f5d76e"/>
+  </g>
 
-  <!-- Small bolt/rivet details on sides -->
-  <circle cx="52" cy="110" r="2.5" fill="url(#goldGrad)"/>
-  <circle cx="148" cy="110" r="2.5" fill="url(#goldGrad)"/>
+  <!-- Lion Head Right -->
+  <g transform="translate(355, 150)">
+    <ellipse cx="0" cy="5" rx="38" ry="40" fill="url(#lionGrad)" stroke="#b8860b" stroke-width="2"/>
+    <g fill="#d4a017" stroke="#b8860b" stroke-width="1">
+      <polygon points="0,-42 -8,-55 8,-55"/>
+      <polygon points="30,-30 40,-42 42,-30"/>
+      <polygon points="35,0 48,-5 45,8"/>
+      <polygon points="30,30 42,35 35,42"/>
+      <polygon points="0,42 -5,55 5,55"/>
+      <polygon points="-30,30 -42,35 -35,42"/>
+      <polygon points="-35,0 -48,-5 -45,8"/>
+      <polygon points="-30,-30 -40,-42 -42,-30"/>
+    </g>
+    <ellipse cx="0" cy="5" rx="24" ry="28" fill="#f5d76e" stroke="#b8860b" stroke-width="1.5"/>
+    <ellipse cx="0" cy="12" rx="14" ry="16" fill="#fae8a8" stroke="#d4a017" stroke-width="1"/>
+    <polygon points="0,6 -7,14 7,14" fill="#1b2a4a"/>
+    <ellipse cx="-10" cy="-2" rx="5" ry="6" fill="#1b2a4a"/>
+    <ellipse cx="10" cy="-2" rx="5" ry="6" fill="#1b2a4a"/>
+    <circle cx="-9" cy="-3" r="2" fill="#fff"/>
+    <circle cx="11" cy="-3" r="2" fill="#fff"/>
+    <path d="M-8 20 Q0 28 8 20" fill="none" stroke="#1b2a4a" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M-16 -10 Q-10 -15 -4 -10" fill="none" stroke="#b8860b" stroke-width="2" stroke-linecap="round"/>
+    <path d="M16 -10 Q10 -15 4 -10" fill="none" stroke="#b8860b" stroke-width="2" stroke-linecap="round"/>
+  </g>
+
+  <!-- Text: Med -->
+  <g transform="translate(250, 320)">
+    <text x="-105" y="25" font-family="Arial Black, Helvetica Neue, Helvetica, sans-serif" font-size="100" font-weight="900" fill="#1b2a4a" text-anchor="middle">M</text>
+    <text x="85" y="25" font-family="Arial Black, Helvetica Neue, Helvetica, sans-serif" font-size="100" font-weight="900" fill="#1b2a4a" text-anchor="middle">ed</text>
+    <g transform="translate(-8, -8)">
+      <g fill="#1b2a4a">
+        <rect x="-4" y="-38" width="8" height="14" rx="1"/>
+        <rect x="-4" y="24" width="8" height="14" rx="1"/>
+        <rect x="-38" y="-4" width="14" height="8" rx="1"/>
+        <rect x="24" y="-4" width="14" height="8" rx="1"/>
+        <rect x="-28" y="-28" width="10" height="10" rx="1" transform="rotate(45 -23 -23)"/>
+        <rect x="18" y="-28" width="10" height="10" rx="1" transform="rotate(45 23 -23)"/>
+        <rect x="-28" y="18" width="10" height="10" rx="1" transform="rotate(45 -23 23)"/>
+        <rect x="18" y="18" width="10" height="10" rx="1" transform="rotate(45 23 23)"/>
+      </g>
+      <circle cx="0" cy="0" r="28" fill="#1b2a4a" stroke="#f5d76e" stroke-width="2"/>
+      <circle cx="0" cy="0" r="20" fill="#fff"/>
+      <line x1="0" y1="-16" x2="0" y2="-12" stroke="#1b2a4a" stroke-width="2" stroke-linecap="round"/>
+      <line x1="0" y1="16" x2="0" y2="12" stroke="#1b2a4a" stroke-width="2" stroke-linecap="round"/>
+      <line x1="-16" y1="0" x2="-12" y2="0" stroke="#1b2a4a" stroke-width="2" stroke-linecap="round"/>
+      <line x1="16" y1="0" x2="12" y2="0" stroke="#1b2a4a" stroke-width="2" stroke-linecap="round"/>
+      <line x1="0" y1="0" x2="0" y2="-12" stroke="#1b2a4a" stroke-width="2" stroke-linecap="round"/>
+      <line x1="0" y1="0" x2="10" y2="6" stroke="#e8872d" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="0" cy="0" r="3" fill="#1b2a4a"/>
+      <circle cx="0" cy="0" r="1.5" fill="#e8872d"/>
+    </g>
+  </g>
+
+  <!-- Text: Tijdregistratiesysteem -->
+  <text x="250" y="385" font-family="Arial, Helvetica Neue, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#1b2a4a" text-anchor="middle" letter-spacing="1">Tijdregistratiesysteem</text>
+
+  <!-- Bottom Small Shield -->
+  <g transform="translate(250, 475)">
+    <path d="M0 -45 L55 -25 L55 10 Q55 35 0 55 Q-55 35 -55 10 L-55 -25 Z" fill="#1b2a4a" stroke="#d4a017" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M0 -38 L48 -20 L48 8 Q48 30 0 48 Q-48 30 -48 8 L-48 -20 Z" fill="none" stroke="#f5d76e" stroke-width="1.5" opacity="0.5"/>
+    <g transform="translate(0, 5)">
+      <path d="M-32 8 A35 35 0 1 1 32 8" fill="none" stroke="#d4a017" stroke-width="6" stroke-linecap="round"/>
+      <path d="M15 -22 A35 35 0 0 1 32 8" fill="none" stroke="#e8872d" stroke-width="6" stroke-linecap="round"/>
+      <g stroke="#f5d76e" stroke-width="2" stroke-linecap="round">
+        <line x1="0" y1="-30" x2="0" y2="-24"/>
+        <line x1="21" y1="-21" x2="17" y2="-16"/>
+        <line x1="30" y1="0" x2="24" y2="0"/>
+        <line x1="21" y1="21" x2="17" y2="16"/>
+        <line x1="-21" y1="-21" x2="-17" y2="-16"/>
+        <line x1="-30" y1="0" x2="-24" y2="0"/>
+        <line x1="-21" y1="21" x2="-17" y2="16"/>
+      </g>
+      <line x1="0" y1="0" x2="20" y2="-20" stroke="#e8872d" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="0" cy="0" r="5" fill="#d4a017" stroke="#f5d76e" stroke-width="1.5"/>
+      <circle cx="0" cy="0" r="2.5" fill="#1b2a4a"/>
+    </g>
+    <g transform="translate(-40, 5)">
+      <circle cx="0" cy="0" r="14" fill="#d4a017" stroke="#b8860b" stroke-width="1.5"/>
+      <circle cx="0" cy="0" r="8" fill="#1b2a4a"/>
+      <circle cx="0" cy="0" r="4" fill="#f5d76e"/>
+      <line x1="0" y1="-14" x2="0" y2="-19" stroke="#d4a017" stroke-width="4" stroke-linecap="round"/>
+      <line x1="0" y1="14" x2="0" y2="19" stroke="#d4a017" stroke-width="4" stroke-linecap="round"/>
+      <line x1="-14" y1="0" x2="-19" y2="0" stroke="#d4a017" stroke-width="4" stroke-linecap="round"/>
+      <line x1="14" y1="0" x2="19" y2="0" stroke="#d4a017" stroke-width="4" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(40, 5)">
+      <circle cx="0" cy="0" r="14" fill="#e8872d" stroke="#c9731a" stroke-width="1.5"/>
+      <circle cx="0" cy="0" r="8" fill="#1b2a4a"/>
+      <circle cx="0" cy="0" r="4" fill="#f5d76e"/>
+      <line x1="0" y1="-14" x2="0" y2="-19" stroke="#e8872d" stroke-width="4" stroke-linecap="round"/>
+      <line x1="0" y1="14" x2="0" y2="19" stroke="#e8872d" stroke-width="4" stroke-linecap="round"/>
+      <line x1="-14" y1="0" x2="-19" y2="0" stroke="#e8872d" stroke-width="4" stroke-linecap="round"/>
+      <line x1="14" y1="0" x2="19" y2="0" stroke="#e8872d" stroke-width="4" stroke-linecap="round"/>
+    </g>
+  </g>
 </svg>
