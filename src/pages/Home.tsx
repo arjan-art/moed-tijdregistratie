@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { UserCircle, ShieldCheck, Timer } from 'lucide-react'
+import { UserCircle, ShieldCheck } from 'lucide-react'
 
 export default function Home() {
   const navigate = useNavigate()
@@ -14,8 +14,8 @@ export default function Home() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <div className="w-24 h-24 rounded-3xl bg-brand-500 flex items-center justify-center mx-auto mb-6 shadow-xl">
-            <Timer className="w-14 h-14 text-white" />
+          <div className="w-28 h-28 rounded-3xl bg-brand-500 flex items-center justify-center mx-auto mb-6 shadow-xl">
+            <img src="/moed-logo.svg" alt="MOED Logo" className="w-20 h-20" />
           </div>
           <h1 className="text-5xl font-extrabold text-foreground tracking-tight mb-3">
             MOED
