@@ -11,7 +11,6 @@ import {
   LogOut,
   Menu,
   X,
-  Timer,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -58,7 +57,7 @@ export default function AdminLayout() {
       >
         <div className="flex items-center gap-3 px-6 py-5 border-b border-brand-700">
           <div className="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center">
-            <Timer className="w-6 h-6 text-white" />
+            <img src="/moed-logo.svg" alt="MOED" className="w-8 h-8" />
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-tight">MOED</h1>
