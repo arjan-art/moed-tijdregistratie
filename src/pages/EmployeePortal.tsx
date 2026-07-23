@@ -1,390 +1,453 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
-  LogIn, LogOut, Coffee, Play, History, CheckCircle2,
-  Clock, MapPin, User, AlertCircle,
-} from 'lucide-react';
-import {
-  getEmployeeByPin, addTimeEntry, getTodayEntries, getWorkZones,
-  getWorkZoneById, type Employee, type TimeEntry,
-} from '@/lib/db';
+  Timer,
+  LogIn,
+  LogOut,
+  Coffee,
+  Play,
+  ArrowLeft,
+  Clock,
+  MapPin,
+  AlertCircle,
+  CheckCircle2,
+} from 'lucide-react'
+import { findEmployeeByPin, addTimeEntry, getTimeEntriesByDate, getWorkZones } from '@/lib/db'
+import type { Employee, TimeEntry } from '@/lib/db'
 
-type PinState = 'idle' | 'loading' | 'success' | 'error';
+const PIN_LENGTH = 4
 
-export function EmployeePortal() {
-  const [pin, setPin] = useState('');
-  const [pinState, setPinState] = useState<PinState>('idle');
-  const [employee, setEmployee] = useState<Employee | null>(null);
-  const [todayEntries, setTodayEntries] = useState<TimeEntry[]>([]);
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [notification, setNotification] = useState<string | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+function formatDuration(startTime: string): string {
+  const diff = Date.now() - new Date(startTime).getTime()
+  const hours = Math.floor(diff / 3600000)
+  const minutes = Math.floor((diff % 3600000) / 60000)
+  const seconds = Math.floor((diff % 60000) / 1000)
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+}
 
-  useEffect(() => {
-    const t = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
+function getTodayDate(): string {
+  return new Date().toISOString().split('T')[0]
+}
 
-  const loadToday = useCallback(() => {
-    if (employee) {
-      setTodayEntries(getTodayEntries(employee.id));
-    }
-  }, [employee]);
+export default function EmployeePortal() {
+  const [pin, setPin] = useState('')
+  const [employee, setEmployee] = useState<Employee | null>(null)
+  const [entries, setEntries] = useState<TimeEntry[]>([])
+  const [message, setMessage] = useState('')
+  const [messageType, setMessageType] = useState<'success' | 'error'>('success')
+  const [loading, setLoading] = useState(false)
+  const [activeSession, setActiveSession] = useState<{ start: string; type: string } | null>(null)
+  const [elapsed, setElapsed] = useState('00:00:00')
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pinInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    loadToday();
-  }, [loadToday]);
+  const today = getTodayDate()
 
-  const showNotification = (msg: string) => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setNotification(msg);
-    timerRef.current = setTimeout(() => setNotification(null), 3000);
-  };
+  const loadEntries = useCallback(async (empId: string) => {
+    const allEntries = await getTimeEntriesByDate(today)
+    const myEntries = allEntries.filter(e => e.employee_id === empId)
+    setEntries(myEntries)
 
-  const handlePinDigit = (digit: string) => {
-    if (pin.length < 4) {
-      const newPin = pin + digit;
-      setPin(newPin);
-      if (newPin.length === 4) {
-        handlePinSubmit(newPin);
-      }
-    }
-  };
+    const lastIn = myEntries.find(e => e.type === 'inklokken')
+    const lastOut = myEntries.find(e => e.type === 'uitklokken')
+    const lastPauseIn = myEntries.find(e => e.type === 'pauze_in')
+    const lastPauseOut = myEntries.find(e => e.type === 'pauze_uit')
 
-  const handlePinSubmit = (enteredPin: string) => {
-    setPinState('loading');
-    setTimeout(() => {
-      const emp = getEmployeeByPin(enteredPin);
-      if (emp) {
-        setPinState('success');
-        setEmployee(emp);
-        showNotification(`Welkom, ${emp.name}!`);
-        setTimeout(() => setPinState('idle'), 800);
+    if (lastIn && (!lastOut || new Date(lastIn.timestamp) > new Date(lastOut.timestamp))) {
+      if (lastPauseIn && (!lastPauseOut || new Date(lastPauseIn.timestamp) > new Date(lastPauseOut.timestamp))) {
+        setActiveSession({ start: lastPauseIn.timestamp, type: 'pauze' })
       } else {
-        setPinState('error');
-        showNotification('Ongeldige PIN code');
-        setTimeout(() => {
-          setPinState('idle');
-          setPin('');
-        }, 800);
+        setActiveSession({ start: lastIn.timestamp, type: 'werk' })
       }
-    }, 300);
-  };
+    } else {
+      setActiveSession(null)
+    }
+  }, [today])
 
-  const handleClockAction = (type: 'clockIn' | 'clockOut' | 'breakIn' | 'breakOut') => {
-    if (!employee) return;
-    const zones = getWorkZones();
-    const zone = getWorkZoneById(employee.workZoneId) || zones[0];
-    const now = new Date();
-    const date = now.toISOString().split('T')[0];
-    const time = now.toTimeString().slice(0, 5);
+  useEffect(() => {
+    if (activeSession) {
+      timerRef.current = setInterval(() => {
+        setElapsed(formatDuration(activeSession.start))
+      }, 1000)
+      setElapsed(formatDuration(activeSession.start))
+    } else {
+      setElapsed('00:00:00')
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [activeSession])
 
-    const typeLabels: Record<string, string> = {
-      clockIn: 'Ingeklokt',
-      clockOut: 'Uitgeklokt',
-      breakIn: 'Pauze gestart',
-      breakOut: 'Pauze beëindigd',
-    };
+  const handlePinChange = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, PIN_LENGTH)
+    setPin(digits)
+    if (digits.length === PIN_LENGTH) {
+      handlePinLogin(digits)
+    }
+  }
 
-    addTimeEntry({
-      employeeId: employee.id,
-      employeeName: employee.name,
+  const handlePinLogin = async (pinCode: string) => {
+    setLoading(true)
+    const emp = await findEmployeeByPin(pinCode)
+    if (emp) {
+      setEmployee(emp)
+      setMessage(`Welkom, ${emp.name}!`)
+      setMessageType('success')
+      await loadEntries(emp.id)
+    } else {
+      setMessage('Ongeldige PIN code. Probeer opnieuw.')
+      setMessageType('error')
+      setPin('')
+      setTimeout(() => pinInputRef.current?.focus(), 100)
+    }
+    setLoading(false)
+    setTimeout(() => setMessage(''), 3000)
+  }
+
+  const handleClockAction = async (type: TimeEntry['type']) => {
+    if (!employee) return
+    setLoading(true)
+
+    const workZones = await getWorkZones()
+    const defaultZone = workZones.find(z => z.is_default)
+
+    const entry: Omit<TimeEntry, 'id' | 'created_at'> = {
+      employee_id: employee.id,
+      employee_name: employee.name,
       type,
-      timestamp: now.toISOString(),
-      date,
-      time,
-      workZoneId: zone?.id,
-      workZoneName: zone?.name,
-      notes: '',
-      approved: false,
-    });
+      timestamp: new Date().toISOString(),
+      note: '',
+      date: today,
+      location: 'binnen',
+      reason: '',
+    }
 
-    showNotification(`${typeLabels[type]} om ${time}`);
-    loadToday();
-  };
+    if (defaultZone) {
+      entry.note = `Zone: ${defaultZone.name}`
+    }
+
+    await addTimeEntry(entry)
+    await loadEntries(employee.id)
+
+    const actionLabels: Record<string, string> = {
+      inklokken: 'Succesvol ingeklokt!',
+      uitklokken: 'Succesvol uitgeklokt!',
+      pauze_in: 'Pauze gestart!',
+      pauze_uit: 'Pauze beëindigd!',
+    }
+    setMessage(actionLabels[type] || 'Actie geregistreerd!')
+    setMessageType('success')
+    setLoading(false)
+    setTimeout(() => setMessage(''), 3000)
+  }
 
   const handleLogout = () => {
-    setEmployee(null);
-    setPin('');
-    setTodayEntries([]);
-    showNotification('Succesvol uitgelogd');
-  };
+    setEmployee(null)
+    setPin('')
+    setEntries([])
+    setActiveSession(null)
+    setElapsed('00:00:00')
+  }
 
-  const calculateDayHours = () => {
-    let totalMs = 0;
-    let breakMs = 0;
-    let lastClockIn = 0;
-    let lastBreakIn = 0;
-    let hasClockedIn = false;
-
-    for (const entry of todayEntries.sort((a, b) => a.timestamp.localeCompare(b.timestamp))) {
-      const ts = new Date(entry.timestamp).getTime();
-      switch (entry.type) {
-        case 'clockIn':
-          lastClockIn = ts;
-          hasClockedIn = true;
-          break;
-        case 'clockOut':
-          if (hasClockedIn) totalMs += ts - lastClockIn;
-          break;
-        case 'breakIn':
-          lastBreakIn = ts;
-          break;
-        case 'breakOut':
-          breakMs += ts - lastBreakIn;
-          break;
-      }
+  const getEntryIcon = (type: string) => {
+    switch (type) {
+      case 'inklokken': return <LogIn className="w-4 h-4 text-green-600" />
+      case 'uitklokken': return <LogOut className="w-4 h-4 text-red-500" />
+      case 'pauze_in': return <Coffee className="w-4 h-4 text-amber-500" />
+      case 'pauze_uit': return <Play className="w-4 h-4 text-blue-500" />
+      default: return <Clock className="w-4 h-4" />
     }
-    return {
-      worked: Math.max(0, (totalMs - breakMs) / (1000 * 60 * 60)),
-      break: breakMs / (1000 * 60 * 60),
-    };
-  };
+  }
 
-  const dayStats = calculateDayHours();
-  const lastEntry = todayEntries[todayEntries.length - 1];
-
-  const getNextAction = (): 'clockIn' | 'clockOut' | 'breakIn' | 'breakOut' => {
-    if (!lastEntry) return 'clockIn';
-    switch (lastEntry.type) {
-      case 'clockIn': return 'clockOut';
-      case 'clockOut': return 'clockIn';
-      case 'breakIn': return 'breakOut';
-      case 'breakOut': return 'clockOut';
-      default: return 'clockIn';
+  const getEntryLabel = (type: string) => {
+    switch (type) {
+      case 'inklokken': return 'Ingeklokt'
+      case 'uitklokken': return 'Uitgeklokt'
+      case 'pauze_in': return 'Pauze gestart'
+      case 'pauze_uit': return 'Pauze beëindigd'
+      default: return type
     }
-  };
+  }
 
-  const nextAction = getNextAction();
+  const formatTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  }
 
-  const clockButtons = [
-    { type: 'clockIn' as const, label: 'In', icon: LogIn, color: 'bg-emerald-500 hover:bg-emerald-600', active: nextAction === 'clockIn' },
-    { type: 'clockOut' as const, label: 'Uit', icon: LogOut, color: 'bg-rose-500 hover:bg-rose-600', active: nextAction === 'clockOut' },
-    { type: 'breakIn' as const, label: 'Pauze', icon: Coffee, color: 'bg-accent hover:bg-accent-600', active: nextAction === 'breakIn' },
-    { type: 'breakOut' as const, label: 'Pauze uit', icon: Play, color: 'bg-teal hover:bg-teal-600', active: nextAction === 'breakOut' },
-  ];
+  const canClockIn = !activeSession
+  const canClockOut = activeSession?.type === 'werk'
+  const canPauseIn = activeSession?.type === 'werk'
+  const canPauseOut = activeSession?.type === 'pauze'
 
-  if (!employee) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary to-primary-800 flex items-center justify-center p-4">
-        <AnimatePresence>
-          {notification && (
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="bg-brand-700 text-white px-4 py-4 flex items-center gap-3 shadow-md">
+        <button
+          onClick={() => window.location.hash = '/'}
+          className="p-2 rounded-lg hover:bg-brand-600 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-brand-500 flex items-center justify-center">
+            <Timer className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold">MOED</h1>
+            <p className="text-xs text-brand-200">Medewerker Portaal</p>
+          </div>
+        </div>
+        {employee && (
+          <div className="ml-auto flex items-center gap-3">
+            <span className="text-sm font-medium">{employee.name}</span>
+            <button
+              onClick={handleLogout}
+              className="p-2 rounded-lg hover:bg-brand-600 transition-colors text-xs"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+      </header>
+
+      <div className="max-w-lg mx-auto px-4 py-8">
+        <AnimatePresence mode="wait">
+          {!employee ? (
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
+              key="pin-entry"
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="fixed top-4 left-1/2 -translate-x-1/2 bg-white text-gray-900 px-6 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2"
+              className="space-y-8"
             >
-              {pinState === 'error' ? <AlertCircle className="w-5 h-5 text-rose-500" /> : <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
-              {notification}
+              <div className="text-center space-y-2">
+                <h2 className="text-2xl font-bold text-foreground">PIN Invoer</h2>
+                <p className="text-muted-foreground">Voer je 4-cijferige PIN code in</p>
+              </div>
+
+              {/* PIN Display */}
+              <div className="flex justify-center gap-4">
+                {Array.from({ length: PIN_LENGTH }).map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className={`w-14 h-16 rounded-xl border-2 flex items-center justify-center text-2xl font-bold transition-all ${
+                      i < pin.length
+                        ? 'border-brand-500 bg-brand-50 text-brand-700'
+                        : 'border-border bg-card text-muted-foreground'
+                    }`}
+                    animate={i < pin.length ? { scale: [1, 1.1, 1] } : {}}
+                  >
+                    {i < pin.length ? '•' : ''}
+                  </motion.div>
+                ))}
+              </div>
+
+              <input
+                ref={pinInputRef}
+                type="password"
+                inputMode="numeric"
+                autoFocus
+                value={pin}
+                onChange={(e) => handlePinChange(e.target.value)}
+                className="absolute opacity-0 w-0 h-0"
+                maxLength={PIN_LENGTH}
+              />
+
+              {/* Keypad */}
+              <div className="grid grid-cols-3 gap-3 max-w-xs mx-auto">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                  <motion.button
+                    key={num}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handlePinChange(pin + num)}
+                    className="h-14 rounded-xl bg-card border border-border text-xl font-semibold text-foreground hover:bg-muted hover:border-brand-300 transition-all shadow-sm"
+                  >
+                    {num}
+                  </motion.button>
+                ))}
+                <div />
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handlePinChange(pin + '0')}
+                  className="h-14 rounded-xl bg-card border border-border text-xl font-semibold text-foreground hover:bg-muted hover:border-brand-300 transition-all shadow-sm"
+                >
+                  0
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setPin(pin.slice(0, -1))}
+                  className="h-14 rounded-xl bg-muted border border-border text-lg font-semibold text-foreground hover:bg-muted/80 transition-all shadow-sm"
+                >
+                  ⌫
+                </motion.button>
+              </div>
+
+              {loading && (
+                <div className="flex justify-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-500" />
+                </div>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="clock-interface"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              {/* Timer Display */}
+              <div className="text-center space-y-2">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-50 text-brand-700 text-sm font-medium">
+                  <Clock className="w-4 h-4" />
+                  {activeSession
+                    ? activeSession.type === 'pauze'
+                      ? 'Pauze bezig'
+                      : 'Ingeklokt'
+                    : 'Niet ingeklokt'}
+                </div>
+                <motion.div
+                  className="text-5xl font-mono font-bold text-foreground tracking-wider"
+                  key={elapsed}
+                  initial={{ scale: 1.02 }}
+                  animate={{ scale: 1 }}
+                >
+                  {elapsed}
+                </motion.div>
+                <p className="text-sm text-muted-foreground">
+                  {new Date().toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-4">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleClockAction('inklokken')}
+                  disabled={!canClockIn || loading}
+                  className={`flex flex-col items-center gap-2 p-6 rounded-2xl border-2 transition-all shadow-sm ${
+                    canClockIn
+                      ? 'border-green-400 bg-green-50 hover:bg-green-100 hover:shadow-md'
+                      : 'border-border bg-muted opacity-50 cursor-not-allowed'
+                  }`}
+                >
+                  <LogIn className={`w-8 h-8 ${canClockIn ? 'text-green-600' : 'text-muted-foreground'}`} />
+                  <span className={`font-semibold ${canClockIn ? 'text-green-700' : 'text-muted-foreground'}`}>Inklokken</span>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleClockAction('uitklokken')}
+                  disabled={!canClockOut || loading}
+                  className={`flex flex-col items-center gap-2 p-6 rounded-2xl border-2 transition-all shadow-sm ${
+                    canClockOut
+                      ? 'border-red-400 bg-red-50 hover:bg-red-100 hover:shadow-md'
+                      : 'border-border bg-muted opacity-50 cursor-not-allowed'
+                  }`}
+                >
+                  <LogOut className={`w-8 h-8 ${canClockOut ? 'text-red-500' : 'text-muted-foreground'}`} />
+                  <span className={`font-semibold ${canClockOut ? 'text-red-600' : 'text-muted-foreground'}`}>Uitklokken</span>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleClockAction('pauze_in')}
+                  disabled={!canPauseIn || loading}
+                  className={`flex flex-col items-center gap-2 p-6 rounded-2xl border-2 transition-all shadow-sm ${
+                    canPauseIn
+                      ? 'border-amber-400 bg-amber-50 hover:bg-amber-100 hover:shadow-md'
+                      : 'border-border bg-muted opacity-50 cursor-not-allowed'
+                  }`}
+                >
+                  <Coffee className={`w-8 h-8 ${canPauseIn ? 'text-amber-600' : 'text-muted-foreground'}`} />
+                  <span className={`font-semibold ${canPauseIn ? 'text-amber-700' : 'text-muted-foreground'}`}>Pauze Start</span>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleClockAction('pauze_uit')}
+                  disabled={!canPauseOut || loading}
+                  className={`flex flex-col items-center gap-2 p-6 rounded-2xl border-2 transition-all shadow-sm ${
+                    canPauseOut
+                      ? 'border-blue-400 bg-blue-50 hover:bg-blue-100 hover:shadow-md'
+                      : 'border-border bg-muted opacity-50 cursor-not-allowed'
+                  }`}
+                >
+                  <Play className={`w-8 h-8 ${canPauseOut ? 'text-blue-600' : 'text-muted-foreground'}`} />
+                  <span className={`font-semibold ${canPauseOut ? 'text-blue-700' : 'text-muted-foreground'}`}>Pauze Einde</span>
+                </motion.button>
+              </div>
+
+              {/* Today's Timeline */}
+              <div className="bg-card rounded-xl border border-border shadow-sm">
+                <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-brand-600" />
+                  <h3 className="font-semibold text-sm">Dagoverzicht</h3>
+                </div>
+                <div className="divide-y divide-border">
+                  {entries.length === 0 ? (
+                    <div className="px-4 py-8 text-center text-muted-foreground text-sm">
+                      Geen registraties vandaag
+                    </div>
+                  ) : (
+                    entries.map((entry) => (
+                      <motion.div
+                        key={entry.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="px-4 py-3 flex items-center gap-3"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                          {getEntryIcon(entry.type)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium">{getEntryLabel(entry.type)}</p>
+                          {entry.note && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {entry.note}
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-sm font-mono text-muted-foreground">
+                          {formatTime(entry.timestamp)}
+                        </span>
+                      </motion.div>
+                    ))
+                  )}
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm"
-        >
-          <div className="text-center mb-8">
-            <img src="/moed-logo.png" alt="MOED" className="w-20 h-20 mx-auto mb-4 rounded-2xl" />
-            <h1 className="text-2xl font-bold text-primary">MOED</h1>
-            <p className="text-gray-500 text-sm">Voer je PIN code in</p>
-          </div>
-
-          <div className="flex justify-center gap-3 mb-8">
-            {[0, 1, 2, 3].map(i => (
-              <div
-                key={i}
-                className={`w-14 h-14 rounded-xl border-2 flex items-center justify-center text-2xl font-bold transition-all ${
-                  i < pin.length
-                    ? pinState === 'error'
-                      ? 'border-rose-500 bg-rose-50'
-                      : pinState === 'success'
-                      ? 'border-emerald-500 bg-emerald-50'
-                      : 'border-primary bg-primary/5'
-                    : 'border-gray-200 bg-gray-50'
-                }`}
-              >
-                {i < pin.length ? '●' : ''}
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(digit => (
-              <button
-                key={digit}
-                onClick={() => handlePinDigit(digit.toString())}
-                className="h-14 rounded-xl bg-gray-100 hover:bg-gray-200 text-xl font-semibold text-gray-800 transition-colors active:scale-95"
-              >
-                {digit}
-              </button>
-            ))}
-            <button
-              onClick={() => setPin(pin.slice(0, -1))}
-              className="h-14 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-600 transition-colors active:scale-95"
+        {/* Message Toast */}
+        <AnimatePresence>
+          {message && (
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 50 }}
+              className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-lg flex items-center gap-2 z-50 ${
+                messageType === 'success'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-red-500 text-white'
+              }`}
             >
-              Wis
-            </button>
-            <button
-              onClick={() => handlePinDigit('0')}
-              className="h-14 rounded-xl bg-gray-100 hover:bg-gray-200 text-xl font-semibold text-gray-800 transition-colors active:scale-95"
-            >
-              0
-            </button>
-            <button
-              onClick={() => { setPin(''); setPinState('idle'); }}
-              className="h-14 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-600 transition-colors active:scale-95"
-            >
-              Reset
-            </button>
-          </div>
-
-          <div className="mt-6 text-center">
-            <a href="#/admin/login" className="text-sm text-primary hover:underline">
-              Administrator login
-            </a>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <AnimatePresence>
-        {notification && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed top-4 left-1/2 -translate-x-1/2 bg-white text-gray-900 px-6 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2"
-          >
-            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-            {notification}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <header className="bg-primary text-white px-4 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <img src="/moed-logo.png" alt="MOED" className="w-10 h-10 rounded-lg" />
-          <div>
-            <h1 className="font-bold text-lg">MOED</h1>
-            <p className="text-xs text-white/60">{currentTime.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-          </div>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-        >
-          <LogOut className="w-5 h-5" />
-        </button>
-      </header>
-
-      <div className="max-w-lg mx-auto p-4 space-y-6">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-              <User className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-gray-900">{employee.name}</h2>
-              <p className="text-sm text-gray-500">{employee.email}</p>
-            </div>
-          </div>
-        </motion.div>
-
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-center">
-            <Clock className="w-5 h-5 text-primary mx-auto mb-1" />
-            <p className="text-xl font-bold text-gray-900">{currentTime.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}</p>
-            <p className="text-xs text-gray-500">Huidig</p>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-center">
-            <div className="w-5 h-5 mx-auto mb-1 rounded-full bg-emerald-100 flex items-center justify-center">
-              <span className="text-xs text-emerald-600 font-bold">W</span>
-            </div>
-            <p className="text-xl font-bold text-gray-900">{dayStats.worked.toFixed(1)}h</p>
-            <p className="text-xs text-gray-500">Gewerkt</p>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 text-center">
-            <Coffee className="w-5 h-5 text-accent mx-auto mb-1" />
-            <p className="text-xl font-bold text-gray-900">{dayStats.break.toFixed(1)}h</p>
-            <p className="text-xs text-gray-500">Pauze</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          {clockButtons.map(({ type, label, icon: Icon, color, active }) => (
-            <motion.button
-              key={type}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleClockAction(type)}
-              disabled={!active}
-              className={`${color} ${active ? 'opacity-100' : 'opacity-40 cursor-not-allowed'} text-white rounded-xl p-6 flex flex-col items-center gap-2 transition-all shadow-lg`}
-            >
-              <Icon className="w-8 h-8" />
-              <span className="font-semibold">{label}</span>
-            </motion.button>
-          ))}
-        </div>
-
-        {employee.workZoneId && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center gap-3">
-            <MapPin className="w-5 h-5 text-teal" />
-            <div>
-              <p className="text-sm text-gray-500">Huidige werkzone</p>
-              <p className="font-medium text-gray-900">{getWorkZoneById(employee.workZoneId)?.name || 'Onbekend'}</p>
-            </div>
-          </div>
-        )}
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-            <History className="w-5 h-5 text-gray-500" />
-            <h3 className="font-semibold text-gray-900">Dagoverzicht</h3>
-          </div>
-          {todayEntries.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
-              <p>Nog geen registraties vandaag</p>
-              <p className="text-sm">Klik op "In" om te starten</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-50">
-              {todayEntries.map((entry, idx) => {
-                const typeConfig: Record<string, { label: string; color: string; icon: typeof LogIn }> = {
-                  clockIn: { label: 'Ingeklokt', color: 'text-emerald-600 bg-emerald-50', icon: LogIn },
-                  clockOut: { label: 'Uitgeklokt', color: 'text-rose-600 bg-rose-50', icon: LogOut },
-                  breakIn: { label: 'Pauze', color: 'text-accent bg-accent/10', icon: Coffee },
-                  breakOut: { label: 'Pauze einde', color: 'text-teal bg-teal/10', icon: Play },
-                };
-                const cfg = typeConfig[entry.type] || typeConfig.clockIn;
-                const EIcon = cfg.icon;
-                return (
-                  <motion.div
-                    key={entry.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="px-4 py-3 flex items-center gap-3"
-                  >
-                    <div className={`w-8 h-8 rounded-lg ${cfg.color} flex items-center justify-center`}>
-                      <EIcon className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">{cfg.label}</p>
-                      <p className="text-xs text-gray-500">{entry.workZoneName}</p>
-                    </div>
-                    <p className="text-sm font-semibold text-gray-900">{entry.time}</p>
-                  </motion.div>
-                );
-              })}
-            </div>
+              {messageType === 'success' ? (
+                <CheckCircle2 className="w-5 h-5" />
+              ) : (
+                <AlertCircle className="w-5 h-5" />
+              )}
+              <span className="font-medium text-sm">{message}</span>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
       </div>
     </div>
-  );
+  )
 }
