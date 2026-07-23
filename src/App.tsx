@@ -1,52 +1,50 @@
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import { seedData, getSession } from '@/lib/db';
-import { AdminLayout } from '@/components/AdminLayout';
-import { EmployeePortal } from '@/pages/EmployeePortal';
-import { AdminLogin } from '@/pages/admin/Login';
-import { AdminDashboard } from '@/pages/admin/Dashboard';
-import { AdminEmployees } from '@/pages/admin/Employees';
-import { AdminTimeEntries } from '@/pages/admin/TimeEntries';
-import { AdminWorkZones } from '@/pages/admin/WorkZones';
-import { AdminManagement } from '@/pages/admin/AdminManagement';
-import { AdminSettings } from '@/pages/admin/Settings';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import Home from './pages/Home'
+import EmployeePortal from './pages/EmployeePortal'
+import AdminLogin from './pages/admin/Login'
+import AdminDashboard from './pages/admin/Dashboard'
+import AdminEmployees from './pages/admin/Employees'
+import AdminTimeEntries from './pages/admin/TimeEntries'
+import AdminWorkZones from './pages/admin/WorkZones'
+import AdminManagement from './pages/admin/AdminManagement'
+import AdminSettings from './pages/admin/Settings'
+import AdminLayout from './components/AdminLayout'
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
-  const session = getSession();
-  if (!session) {
-    return <Navigate to="/admin/login" replace />;
+  const [auth, setAuth] = useState<boolean | null>(null)
+  useEffect(() => {
+    const admin = sessionStorage.getItem('moed_admin_session')
+    setAuth(!!admin)
+  }, [])
+  if (auth === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    )
   }
-  return <>{children}</>;
+  if (!auth) return <Navigate to="/admin/login" replace />
+  return <>{children}</>
 }
 
 export default function App() {
-  useEffect(() => {
-    seedData();
-  }, []);
-
   return (
     <HashRouter>
       <Routes>
-        <Route path="/" element={<EmployeePortal />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/portal" element={<EmployeePortal />} />
+        <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route
-          path="/admin"
-          element={
-            <AdminGuard>
-              <AdminLayout />
-            </AdminGuard>
-          }
-        >
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="werknemers" element={<AdminEmployees />} />
-          <Route path="uren" element={<AdminTimeEntries />} />
-          <Route path="werkzones" element={<AdminWorkZones />} />
-          <Route path="beheerders" element={<AdminManagement />} />
-          <Route path="instellingen" element={<AdminSettings />} />
+        <Route element={<AdminGuard><AdminLayout /></AdminGuard>}>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/employees" element={<AdminEmployees />} />
+          <Route path="/admin/time-entries" element={<AdminTimeEntries />} />
+          <Route path="/admin/work-zones" element={<AdminWorkZones />} />
+          <Route path="/admin/admins" element={<AdminManagement />} />
+          <Route path="/admin/settings" element={<AdminSettings />} />
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>
-  );
+  )
 }
