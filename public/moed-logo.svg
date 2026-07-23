@@ -1,34 +1,123 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="hatGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#dbb26b;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#a87827;stop-opacity:1" />
+    <!-- Gold gradient for helmet -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#f5d76e;stop-opacity:1" />
+      <stop offset="30%" style="stop-color:#e8b931;stop-opacity:1" />
+      <stop offset="70%" style="stop-color:#c9940d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a07800;stop-opacity:1" />
     </linearGradient>
-    <linearGradient id="brimGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#e8cc9f;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#ce9837;stop-opacity:1" />
+    <!-- Darker gold for shading -->
+    <linearGradient id="goldDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#c9940d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8a5e00;stop-opacity:1" />
     </linearGradient>
+    <!-- Light highlight -->
+    <linearGradient id="highlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0" />
+    </linearGradient>
+    <!-- Drop shadow -->
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
   </defs>
-  
-  <!-- Hard hat -->
-  <g transform="translate(0, -15)">
-    <!-- Hat dome -->
-    <path d="M100 25 C60 25 35 55 30 85 L170 85 C165 55 140 25 100 25Z" fill="url(#hatGrad)" stroke="#6c4e19" stroke-width="2"/>
+
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#1a1a2e"/>
+  <circle cx="256" cy="256" r="232" fill="#16213e"/>
+
+  <!-- Outer ring -->
+  <circle cx="256" cy="256" r="240" fill="none" stroke="url(#goldGrad)" stroke-width="4"/>
+
+  <!-- Hard Hat -->
+  <g filter="url(#shadow)">
+    <!-- Helmet dome -->
+    <path d="M256 80
+             C180 80 130 130 115 195
+             L115 210
+             L397 210
+             L397 195
+             C382 130 332 80 256 80Z"
+          fill="url(#goldGrad)"/>
+
     <!-- Center ridge -->
-    <path d="M100 25 L100 85" stroke="#8a6320" stroke-width="3" fill="none"/>
+    <path d="M256 75 L256 210" stroke="#8a5e00" stroke-width="6" stroke-linecap="round"/>
+
     <!-- Left ridge -->
-    <path d="M75 30 L80 85" stroke="#8a6320" stroke-width="2" fill="none"/>
+    <path d="M200 90 Q210 140 210 210" stroke="#8a5e00" stroke-width="3" fill="none" stroke-linecap="round"/>
+
     <!-- Right ridge -->
-    <path d="M125 30 L120 85" stroke="#8a6320" stroke-width="2" fill="none"/>
-    <!-- Brim -->
-    <ellipse cx="100" cy="88" rx="80" ry="12" fill="url(#brimGrad)" stroke="#6c4e19" stroke-width="2"/>
-    <!-- Highlight -->
-    <ellipse cx="85" cy="50" rx="15" ry="10" fill="#f5e6d3" opacity="0.4"/>
+    <path d="M312 90 Q302 140 302 210" stroke="#8a5e00" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+    <!-- Front brim -->
+    <path d="M95 205
+             Q95 235 130 240
+             L382 240
+             Q417 235 417 205
+             Q417 190 397 190
+             L115 190
+             Q95 190 95 205Z"
+          fill="url(#goldDark)"/>
+
+    <!-- Brim highlight -->
+    <path d="M105 205
+             Q105 220 130 225
+             L382 225
+             Q407 220 407 205
+             Q407 200 397 200
+             L115 200
+             Q105 200 105 205Z"
+          fill="url(#highlight)"/>
+
+    <!-- Dome highlight -->
+    <ellipse cx="200" cy="140" rx="35" ry="25" fill="url(#highlight)" transform="rotate(-15 200 140)"/>
+
+    <!-- Small ventilation holes -->
+    <circle cx="175" cy="165" r="4" fill="#8a5e00" opacity="0.5"/>
+    <circle cx="337" cy="165" r="4" fill="#8a5e00" opacity="0.5"/>
   </g>
-  
-  <!-- MOED text -->
-  <text x="100" y="145" font-family="Arial Black, Arial, sans-serif" font-size="38" font-weight="900" text-anchor="middle" fill="#4e3912" letter-spacing="3">MOED</text>
-  
-  <!-- Subtle underline -->
-  <line x1="30" y1="155" x2="170" y2="155" stroke="#a87827" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- MOED Text -->
+  <g filter="url(#shadow)">
+    <text x="256" y="360"
+          font-family="Arial Black, 'Helvetica Neue', Helvetica, sans-serif"
+          font-size="110"
+          font-weight="900"
+          text-anchor="middle"
+          fill="url(#goldGrad)"
+          letter-spacing="8">MOED</text>
+    <!-- Text outline for depth -->
+    <text x="256" y="360"
+          font-family="Arial Black, 'Helvetica Neue', Helvetica, sans-serif"
+          font-size="110"
+          font-weight="900"
+          text-anchor="middle"
+          fill="none"
+          stroke="#8a5e00"
+          stroke-width="2"
+          letter-spacing="8">MOED</text>
+  </g>
+
+  <!-- Clock hands inside the O (decorative element) -->
+  <g transform="translate(256, 310)">
+    <circle cx="0" cy="0" r="14" fill="none" stroke="#c9940d" stroke-width="2" opacity="0.6"/>
+    <line x1="0" y1="0" x2="0" y2="-10" stroke="#c9940d" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+    <line x1="0" y1="0" x2="7" y2="5" stroke="#c9940d" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+    <circle cx="0" cy="0" r="3" fill="#c9940d" opacity="0.6"/>
+  </g>
+
+  <!-- Bottom tagline -->
+  <text x="256" y="420"
+        font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-size="22"
+        font-weight="500"
+        text-anchor="middle"
+        fill="#c9940d"
+        letter-spacing="12"
+        opacity="0.85">TIJDREGISTRATIE</text>
+
+  <!-- Decorative dots -->
+  <circle cx="100" cy="380" r="3" fill="#c9940d" opacity="0.4"/>
+  <circle cx="412" cy="380" r="3" fill="#c9940d" opacity="0.4"/>
 </svg>
