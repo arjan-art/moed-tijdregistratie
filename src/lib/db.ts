@@ -353,7 +353,7 @@ export async function getEmailSettings(): Promise<EmailSettings | null> {
   return data
 }
 
-export async function upsertEmailSettings(settings: Omit<EmailSettings, 'id' | 'created_at' | 'updated_at'>): Promise<boolean> {
+export async function upsertEmailSettings(settings: Omit<EmailSettings, 'id' | 'created_at' | 'updated_at'>): Promise<{ success: boolean; error?: string }> {
   const { error } = await supabase.from('email_settings').upsert({
     id: 'default',
     ...settings,
@@ -361,9 +361,9 @@ export async function upsertEmailSettings(settings: Omit<EmailSettings, 'id' | '
   })
   if (error) {
     console.error('upsertEmailSettings error:', error)
-    return false
+    return { success: false, error: error.message }
   }
-  return true
+  return { success: true }
 }
 
 export async function sendWelcomeEmail(employeeName: string, employeeEmail: string, pin: string): Promise<{ success: boolean; message: string }> {
