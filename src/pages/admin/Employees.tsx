@@ -76,6 +76,15 @@ export default function AdminEmployees() {
     setEmailMessage('')
   }
 
+  // Helper: converteer lege work_zone_id naar null voor de database
+  const buildEmployeeData = () => {
+    const data: Record<string, unknown> = { ...formData }
+    if (data.work_zone_id === '') {
+      data.work_zone_id = null
+    }
+    return data as Omit<Employee, 'id' | 'created_at'>
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.name.trim() || !formData.email.trim() || !formData.pin.trim()) return
@@ -83,12 +92,14 @@ export default function AdminEmployees() {
     setEmailStatus('idle')
     setEmailMessage('')
 
+    const employeeData = buildEmployeeData()
+
     if (editingId) {
-      await updateEmployee(editingId, formData)
+      await updateEmployee(editingId, employeeData)
       resetForm()
       await loadData()
     } else {
-      const newId = await addEmployee(formData)
+      const newId = await addEmployee(employeeData)
       if (newId && sendEmail) {
         setEmailStatus('sending')
         const result = await sendWelcomeEmail(formData.name, formData.email, formData.pin)
