@@ -368,7 +368,7 @@ export async function upsertEmailSettings(settings: Omit<EmailSettings, 'id' | '
 
 export async function sendWelcomeEmail(employeeName: string, employeeEmail: string, pin: string): Promise<{ success: boolean; message: string }> {
   try {
-    const { data, error } = await supabase.functions.invoke('send-welcome-email', {
+    const { data, error } = await supabase.functions.invoke('send-welcome-v2', {
       body: {
         employee_name: employeeName,
         employee_email: employeeEmail,
