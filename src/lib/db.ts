@@ -55,6 +55,28 @@ export interface Company {
   created_at: string
 }
 
+export interface EmailSettings {
+  id: string
+  provider: 'resend' | 'sendgrid'
+  api_key: string
+  from_email: string
+  from_name: string
+  created_at: string
+  updated_at: string
+}
+
+export interface EmailLog {
+  id: string
+  employee_id: string | null
+  employee_email: string
+  employee_name: string
+  email_type: string
+  status: 'pending' | 'sent' | 'failed'
+  error_message: string | null
+  sent_at: string | null
+  created_at: string
+}
+
 export async function getEmployees(): Promise<Employee[]> {
   const { data, error } = await supabase.from('employees').select('*').order('name')
   if (error) {
@@ -318,4 +340,48 @@ export async function upsertCompany(companyData: Omit<Company, 'id' | 'created_a
     return false
   }
   return true
+}
+
+// ============ EMAIL SETTINGS ============
+
+export async function getEmailSettings(): Promise<EmailSettings | null> {
+  const { data, error } = await supabase.from('email_settings').select('*').single()
+  if (error) {
+    console.error('getEmailSettings error:', error)
+    return null
+  }
+  return data
+}
+
+export async function upsertEmailSettings(settings: Omit<EmailSettings, 'id' | 'created_at' | 'updated_at'>): Promise<boolean> {
+  const { error } = await supabase.from('email_settings').upsert({
+    id: 'default',
+    ...settings,
+    updated_at: new Date().toISOString(),
+  })
+  if (error) {
+    console.error('upsertEmailSettings error:', error)
+    return false
+  }
+  return true
+}
+
+export async function sendWelcomeEmail(employeeName: string, employeeEmail: string, pin: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('send-welcome-email', {
+      body: {
+        employee_name: employeeName,
+        employee_email: employeeEmail,
+        pin,
+      },
+    })
+    if (error) {
+      console.error('sendWelcomeEmail error:', error)
+      return { success: false, message: error.message || 'E-mail versturen mislukt' }
+    }
+    return { success: true, message: data?.message || 'Welkomstmail verstuurd' }
+  } catch (err: any) {
+    console.error('sendWelcomeEmail exception:', err)
+    return { success: false, message: err.message || 'E-mail versturen mislukt' }
+  }
 }
