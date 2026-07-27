@@ -43,6 +43,7 @@ export default function AdminSettings() {
   const [saved, setSaved] = useState(false)
   const [savingEmail, setSavingEmail] = useState(false)
   const [savedEmail, setSavedEmail] = useState(false)
+  const [emailSaveError, setEmailSaveError] = useState('')
 
   useEffect(() => {
     loadData()
@@ -79,14 +80,19 @@ export default function AdminSettings() {
     e.preventDefault()
     setSavingEmail(true)
     setSavedEmail(false)
+    setEmailSaveError('')
     const { id, created_at, updated_at, ...dataToSave } = emailSettings
     void id
     void created_at
     void updated_at
-    await upsertEmailSettings(dataToSave)
-    setSavedEmail(true)
+    const result = await upsertEmailSettings(dataToSave)
+    if (result.success) {
+      setSavedEmail(true)
+      setTimeout(() => setSavedEmail(false), 3000)
+    } else {
+      setEmailSaveError(result.error || 'Opslaan mislukt')
+    }
     setSavingEmail(false)
-    setTimeout(() => setSavedEmail(false), 3000)
   }
 
   const updateField = (field: keyof Company, value: string) => {
@@ -414,6 +420,16 @@ export default function AdminSettings() {
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   Opgeslagen!
+                </motion.div>
+              )}
+              {emailSaveError && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="flex items-center gap-2 text-red-600 text-sm font-medium"
+                >
+                  <AlertTriangle className="w-4 h-4" />
+                  {emailSaveError}
                 </motion.div>
               )}
             </div>

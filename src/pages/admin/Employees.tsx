@@ -12,6 +12,7 @@ import {
   Mail,
   MailCheck,
   MailWarning,
+  Send,
 } from 'lucide-react'
 import { getEmployees, addEmployee, updateEmployee, deleteEmployee, getWorkZones, sendWelcomeEmail } from '@/lib/db'
 import type { Employee, WorkZone } from '@/lib/db'
@@ -39,6 +40,7 @@ export default function AdminEmployees() {
   const [sendEmail, setSendEmail] = useState(true)
   const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [emailMessage, setEmailMessage] = useState('')
+  const [resendStatus, setResendStatus] = useState<Record<string, 'idle' | 'sending' | 'sent' | 'error'>>({})
 
   useEffect(() => {
     loadData()
@@ -125,6 +127,19 @@ export default function AdminEmployees() {
 
   const handleGeneratePin = () => {
     setFormData({ ...formData, pin: generatePin() })
+  }
+
+  const handleResendWelcome = async (emp: Employee) => {
+    setResendStatus((prev) => ({ ...prev, [emp.id]: 'sending' }))
+    const result = await sendWelcomeEmail(emp.name, emp.email, emp.pin)
+    if (result.success) {
+      setResendStatus((prev) => ({ ...prev, [emp.id]: 'sent' }))
+      setTimeout(() => {
+        setResendStatus((prev) => ({ ...prev, [emp.id]: 'idle' }))
+      }, 3000)
+    } else {
+      setResendStatus((prev) => ({ ...prev, [emp.id]: 'error' }))
+    }
   }
 
   return (
@@ -388,6 +403,32 @@ export default function AdminEmployees() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {/* Resend welcome email */}
+                        {resendStatus[emp.id] === 'sending' ? (
+                          <span className="p-2">
+                            <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-500 inline-block" />
+                          </span>
+                        ) : resendStatus[emp.id] === 'sent' ? (
+                          <span className="p-2 text-green-600" title="Welkomstmail verstuurd!">
+                            <Check className="w-4 h-4" />
+                          </span>
+                        ) : resendStatus[emp.id] === 'error' ? (
+                          <button
+                            onClick={() => handleResendWelcome(emp)}
+                            className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                            title="Opnieuw proberen"
+                          >
+                            <Mail className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleResendWelcome(emp)}
+                            className="p-2 rounded-lg hover:bg-blue-50 transition-colors text-muted-foreground hover:text-brand-600"
+                            title="Verstuur welkomstmail opnieuw"
+                          >
+                            <Send className="w-4 h-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleEdit(emp)}
                           className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
