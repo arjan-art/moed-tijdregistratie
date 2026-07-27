@@ -9,8 +9,11 @@ import {
   X,
   Check,
   MapPin,
+  Mail,
+  MailCheck,
+  MailWarning,
 } from 'lucide-react'
-import { getEmployees, addEmployee, updateEmployee, deleteEmployee, getWorkZones } from '@/lib/db'
+import { getEmployees, addEmployee, updateEmployee, deleteEmployee, getWorkZones, sendWelcomeEmail } from '@/lib/db'
 import type { Employee, WorkZone } from '@/lib/db'
 
 function generatePin(): string {
@@ -33,6 +36,9 @@ export default function AdminEmployees() {
     work_zone_id: '',
   })
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [sendEmail, setSendEmail] = useState(true)
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [emailMessage, setEmailMessage] = useState('')
 
   useEffect(() => {
     loadData()
@@ -64,19 +70,37 @@ export default function AdminEmployees() {
     })
     setEditingId(null)
     setShowForm(false)
+    setEmailStatus('idle')
+    setEmailMessage('')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.name.trim() || !formData.email.trim() || !formData.pin.trim()) return
 
+    setEmailStatus('idle')
+    setEmailMessage('')
+
     if (editingId) {
       await updateEmployee(editingId, formData)
+      resetForm()
+      await loadData()
     } else {
-      await addEmployee(formData)
+      const newId = await addEmployee(formData)
+      if (newId && sendEmail) {
+        setEmailStatus('sending')
+        const result = await sendWelcomeEmail(formData.name, formData.email, formData.pin)
+        if (result.success) {
+          setEmailStatus('sent')
+          setEmailMessage(result.message)
+        } else {
+          setEmailStatus('error')
+          setEmailMessage(result.message)
+        }
+      }
+      resetForm()
+      await loadData()
     }
-    resetForm()
-    await loadData()
   }
 
   const handleEdit = (emp: Employee) => {
@@ -211,6 +235,55 @@ export default function AdminEmployees() {
                     ))}
                   </select>
                 </div>
+
+                {/* Email checkbox - only for new employees */}
+                {!editingId && (
+                  <div className="sm:col-span-2">
+                    <label className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={sendEmail}
+                        onChange={(e) => setSendEmail(e.target.checked)}
+                        className="w-5 h-5 rounded border-border text-brand-600 focus:ring-brand-500"
+                      />
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-brand-600" />
+                        <span className="text-sm font-medium">Stuur welkomstmail met PIN naar medewerker</span>
+                      </div>
+                    </label>
+                  </div>
+                )}
+
+                {/* Email status message */}
+                {emailStatus !== 'idle' && (
+                  <div className="sm:col-span-2">
+                    {emailStatus === 'sending' && (
+                      <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-sm">
+                        <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
+                        Welkomstmail wordt verstuurd...
+                      </div>
+                    )}
+                    {emailStatus === 'sent' && (
+                      <div className="flex items-center gap-2 p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm">
+                        <MailCheck className="w-4 h-4" />
+                        {emailMessage}
+                      </div>
+                    )}
+                    {emailStatus === 'error' && (
+                      <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm">
+                        <MailWarning className="w-4 h-4" />
+                        <div>
+                          <span className="font-medium">Welkomstmail niet verstuurd:</span>{' '}
+                          {emailMessage}
+                          <p className="text-xs mt-1 opacity-80">
+                            Tip: Configureer een e-mail provider in Instellingen &gt; E-mail.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="sm:col-span-2 flex justify-end gap-3">
                   <button
                     type="button"
