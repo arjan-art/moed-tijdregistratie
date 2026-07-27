@@ -9,9 +9,12 @@ import {
   Mail,
   MapPin,
   Hash,
+  MailCheck,
+  KeyRound,
+  AlertTriangle,
 } from 'lucide-react'
-import { getCompany, upsertCompany } from '@/lib/db'
-import type { Company } from '@/lib/db'
+import { getCompany, upsertCompany, getEmailSettings, upsertEmailSettings } from '@/lib/db'
+import type { Company, EmailSettings } from '@/lib/db'
 
 export default function AdminSettings() {
   const [company, setCompany] = useState<Company>({
@@ -26,19 +29,33 @@ export default function AdminSettings() {
     kvk: '',
     created_at: '',
   })
+  const [emailSettings, setEmailSettings] = useState<EmailSettings>({
+    id: 'default',
+    provider: 'resend',
+    api_key: '',
+    from_email: 'noreply@moed.nl',
+    from_name: 'MOED Tijdregistratie',
+    created_at: '',
+    updated_at: '',
+  })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [savingEmail, setSavingEmail] = useState(false)
+  const [savedEmail, setSavedEmail] = useState(false)
 
   useEffect(() => {
-    loadCompany()
+    loadData()
   }, [])
 
-  async function loadCompany() {
+  async function loadData() {
     setLoading(true)
-    const data = await getCompany()
-    if (data) {
-      setCompany(data)
+    const [companyData, emailData] = await Promise.all([getCompany(), getEmailSettings()])
+    if (companyData) {
+      setCompany(companyData)
+    }
+    if (emailData) {
+      setEmailSettings(emailData)
     }
     setLoading(false)
   }
@@ -58,8 +75,26 @@ export default function AdminSettings() {
     setTimeout(() => setSaved(false), 3000)
   }
 
+  const handleSaveEmail = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSavingEmail(true)
+    setSavedEmail(false)
+    const { id, created_at, updated_at, ...dataToSave } = emailSettings
+    void id
+    void created_at
+    void updated_at
+    await upsertEmailSettings(dataToSave)
+    setSavedEmail(true)
+    setSavingEmail(false)
+    setTimeout(() => setSavedEmail(false), 3000)
+  }
+
   const updateField = (field: keyof Company, value: string) => {
     setCompany((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const updateEmailField = (field: keyof EmailSettings, value: string) => {
+    setEmailSettings((prev) => ({ ...prev, [field]: value }))
   }
 
   if (loading) {
@@ -268,6 +303,162 @@ export default function AdminSettings() {
           <div className="mt-6 pt-4 border-t border-brand-700">
             <p className="text-xs text-brand-400">
               Deze gegevens worden gebruikt in rapportages en exporten.
+            </p>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Email Settings */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="lg:col-span-2 bg-card rounded-xl border border-border shadow-sm p-6"
+        >
+          <div className="flex items-center gap-2 mb-6">
+            <MailCheck className="w-5 h-5 text-brand-600" />
+            <h2 className="text-lg font-semibold">E-mail Configuratie</h2>
+          </div>
+
+          <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-amber-700">
+                Om welkomstmails te versturen naar nieuwe medewerkers, moet je een e-mail provider configureren. 
+                We raden <strong>Resend</strong> aan (gratis tot 100 e-mails/dag). Maak een account aan op{' '}
+                <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="underline font-medium">resend.com</a>, 
+                verifieer je domein en kopieer je API key hieronder.
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSaveEmail} className="space-y-5">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">E-mail Provider</label>
+                <select
+                  value={emailSettings.provider}
+                  onChange={(e) => updateEmailField('provider', e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="resend">Resend (aanbevolen)</option>
+                  <option value="sendgrid">SendGrid</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <KeyRound className="w-4 h-4 text-muted-foreground" />
+                  API Key
+                </label>
+                <input
+                  type="password"
+                  value={emailSettings.api_key}
+                  onChange={(e) => updateEmailField('api_key', e.target.value)}
+                  placeholder="re_xxxxxxxxxxxxxxxx"
+                  className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-muted-foreground" />
+                  Afzender e-mail
+                </label>
+                <input
+                  type="email"
+                  value={emailSettings.from_email}
+                  onChange={(e) => updateEmailField('from_email', e.target.value)}
+                  placeholder="noreply@jouwdomein.nl"
+                  className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Afzender naam</label>
+                <input
+                  type="text"
+                  value={emailSettings.from_name}
+                  onChange={(e) => updateEmailField('from_name', e.target.value)}
+                  placeholder="MOED Tijdregistratie"
+                  className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 pt-2">
+              <button
+                type="submit"
+                disabled={savingEmail}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 disabled:opacity-50 transition-colors shadow-sm"
+              >
+                {savingEmail ? (
+                  <span className="flex items-center gap-2">
+                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                    Bezig...
+                  </span>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Opslaan
+                  </>
+                )}
+              </button>
+
+              {savedEmail && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="flex items-center gap-2 text-green-600 text-sm font-medium"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  Opgeslagen!
+                </motion.div>
+              )}
+            </div>
+          </form>
+        </motion.div>
+
+        {/* Email Preview Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-brand-800 text-white rounded-xl shadow-sm p-6"
+        >
+          <h3 className="text-lg font-semibold mb-4">Welkomstmail</h3>
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs text-brand-300 uppercase tracking-wider">Status</p>
+              <p className="text-sm font-medium mt-0.5 flex items-center gap-2">
+                {emailSettings.api_key ? (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-green-400" />
+                    Geconfigureerd
+                  </>
+                ) : (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-amber-400" />
+                    Niet geconfigureerd
+                  </>
+                )}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-brand-300 uppercase tracking-wider">Provider</p>
+              <p className="text-sm mt-0.5 capitalize">{emailSettings.provider}</p>
+            </div>
+            <div>
+              <p className="text-xs text-brand-300 uppercase tracking-wider">Afzender</p>
+              <p className="text-sm mt-0.5">{emailSettings.from_name}</p>
+              <p className="text-sm text-brand-300">{emailSettings.from_email}</p>
+            </div>
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-brand-700">
+            <p className="text-xs text-brand-400">
+              Wanneer een nieuwe medewerker wordt toegevoegd, wordt er automatisch een welkomstmail verstuurd met hun persoonlijke PIN.
             </p>
           </div>
         </motion.div>
