@@ -9,29 +9,10 @@ import AdminTimeEntries from './pages/admin/TimeEntries'
 import AdminWorkZones from './pages/admin/WorkZones'
 import AdminManagement from './pages/admin/AdminManagement'
 import AdminSettings from './pages/admin/Settings'
+import AdminSchedules from './pages/admin/Schedules'
+import AdminAbsences from './pages/admin/Absences'
+import AdminLeave from './pages/admin/Leave'
 import AdminLayout from './components/AdminLayout'
-import { getAdmins, addAdmin } from './lib/db'
-
-// Seed default admin if none exists
-async function seedDefaultAdmin() {
-  try {
-    const admins = await getAdmins()
-    if (admins.length === 0) {
-      await addAdmin({
-        name: 'Admin',
-        email: 'admin@moed.nl',
-        password: 'admin123',
-        role: 'superadmin',
-      })
-      console.log('[MOED] Default admin account created')
-    }
-  } catch (err) {
-    console.error('[MOED] Seed error:', err)
-  }
-}
-
-// Run seed on module load
-seedDefaultAdmin()
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const [auth, setAuth] = useState<boolean | null>(null)
@@ -63,6 +44,9 @@ export default function App() {
           <Route path="/admin/employees" element={<AdminEmployees />} />
           <Route path="/admin/time-entries" element={<AdminTimeEntries />} />
           <Route path="/admin/work-zones" element={<AdminWorkZones />} />
+          <Route path="/admin/schedules" element={<AdminSchedules />} />
+          <Route path="/admin/absences" element={<AdminAbsences />} />
+          <Route path="/admin/leave" element={<AdminLeave />} />
           <Route path="/admin/admins" element={<AdminManagement />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
         </Route>
