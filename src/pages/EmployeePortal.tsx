@@ -11,9 +11,31 @@ import {
   MapPin,
   AlertCircle,
   CheckCircle2,
+  HeartPulse,
+  Umbrella,
+  Calendar,
+  FileText,
 } from 'lucide-react'
-import { findEmployeeByPin, addTimeEntry, getTimeEntriesByDate, getWorkZones } from '@/lib/db'
-import type { Employee, TimeEntry } from '@/lib/db'
+import {
+  findEmployeeByPin,
+  addTimeEntry,
+  getTimeEntriesByDate,
+  getWorkZones,
+  addAbsence,
+  addLeaveRequest,
+  getLeaveBalanceByEmployee,
+  getLeaveRequestsByEmployee,
+  getSchedulesByEmployee,
+} from '@/lib/db'
+import type { Employee, TimeEntry, Absence, LeaveRequest, Schedule, LeaveBalance } from '@/lib/db'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { formatDutchDateOnly, formatTimeDisplay } from '@/lib/timezone'
+
+const DUTCH_DAYS = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag']
 
 const PIN_LENGTH = 4
 
@@ -40,6 +62,32 @@ export default function EmployeePortal() {
   const [elapsed, setElapsed] = useState('00:00:00')
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const pinInputRef = useRef<HTMLInputElement>(null)
+
+  // Absence modal state
+  const [absenceOpen, setAbsenceOpen] = useState(false)
+  const [absenceForm, setAbsenceForm] = useState({
+    type: 'ziekte' as Absence['type'],
+    start_date: getTodayDate(),
+    end_date: getTodayDate(),
+    start_time: '',
+    end_time: '',
+    note: '',
+  })
+
+  // Leave request modal state
+  const [leaveOpen, setLeaveOpen] = useState(false)
+  const [leaveForm, setLeaveForm] = useState({
+    start_date: getTodayDate(),
+    end_date: getTodayDate(),
+    hours: 8,
+    type: 'vakantie' as LeaveRequest['type'],
+    note: '',
+  })
+  const [leaveBalance, setLeaveBalance] = useState<LeaveBalance | null>(null)
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([])
+
+  // Schedule state
+  const [schedules, setSchedules] = useState<Schedule[]>([])
 
   const today = getTodayDate()
 
@@ -94,6 +142,7 @@ export default function EmployeePortal() {
       setMessage(`Welkom, ${emp.name}!`)
       setMessageType('success')
       await loadEntries(emp.id)
+      await loadEmployeeData(emp.id)
     } else {
       setMessage('Ongeldige PIN code. Probeer opnieuw.')
       setMessageType('error')
@@ -147,6 +196,71 @@ export default function EmployeePortal() {
     setEntries([])
     setActiveSession(null)
     setElapsed('00:00:00')
+    setLeaveBalance(null)
+    setLeaveRequests([])
+    setSchedules([])
+  }
+
+  const loadEmployeeData = useCallback(async (empId: string) => {
+    const [balance, requests, scheds] = await Promise.all([
+      getLeaveBalanceByEmployee(empId),
+      getLeaveRequestsByEmployee(empId),
+      getSchedulesByEmployee(empId),
+    ])
+    setLeaveBalance(balance)
+    setLeaveRequests(requests)
+    setSchedules(scheds)
+  }, [])
+
+  const handleAbsenceSubmit = async () => {
+    if (!employee) return
+    setLoading(true)
+    const result = await addAbsence({
+      employee_id: employee.id,
+      type: absenceForm.type,
+      start_date: absenceForm.start_date,
+      end_date: absenceForm.end_date,
+      start_time: absenceForm.start_time || null,
+      end_time: absenceForm.end_time || null,
+      note: absenceForm.note || null,
+      status: 'goedgekeurd',
+    })
+    setLoading(false)
+    if (result) {
+      setAbsenceOpen(false)
+      setAbsenceForm({ type: 'ziekte', start_date: getTodayDate(), end_date: getTodayDate(), start_time: '', end_time: '', note: '' })
+      setMessage('Afwezigheid succesvol gemeld!')
+      setMessageType('success')
+    } else {
+      setMessage('Er is iets misgegaan. Probeer opnieuw.')
+      setMessageType('error')
+    }
+    setTimeout(() => setMessage(''), 3000)
+  }
+
+  const handleLeaveSubmit = async () => {
+    if (!employee) return
+    setLoading(true)
+    const result = await addLeaveRequest({
+      employee_id: employee.id,
+      start_date: leaveForm.start_date,
+      end_date: leaveForm.end_date,
+      hours_requested: leaveForm.hours,
+      type: leaveForm.type,
+      note: leaveForm.note || null,
+    })
+    setLoading(false)
+    if (result) {
+      setLeaveOpen(false)
+      setLeaveForm({ start_date: getTodayDate(), end_date: getTodayDate(), hours: 8, type: 'vakantie', note: '' })
+      setMessage('Verlofaanvraag succesvol ingediend!')
+      setMessageType('success')
+      await loadEmployeeData(employee.id)
+    } else {
+      setMessage('Er is iets misgegaan. Probeer opnieuw.')
+      setMessageType('error')
+    }
+    setTimeout(() => setMessage(''), 3000)
   }
 
   const getEntryIcon = (type: string) => {
@@ -177,6 +291,15 @@ export default function EmployeePortal() {
   const canClockOut = activeSession?.type === 'werk'
   const canPauseIn = activeSession?.type === 'werk'
   const canPauseOut = activeSession?.type === 'pauze'
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'ingediend': return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Ingediend</Badge>
+      case 'goedgekeurd': return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Goedgekeurd</Badge>
+      case 'afgewezen': return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Afgewezen</Badge>
+      default: return <Badge variant="outline">{status}</Badge>
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -381,6 +504,208 @@ export default function EmployeePortal() {
                   <span className={`font-semibold ${canPauseOut ? 'text-blue-700' : 'text-muted-foreground'}`}>Pauze Einde</span>
                 </motion.button>
               </div>
+
+              {/* Quick Actions */}
+              <div className="grid grid-cols-2 gap-3">
+                <Dialog open={absenceOpen} onOpenChange={setAbsenceOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full gap-2">
+                      <HeartPulse className="w-4 h-4" />
+                      Afwezigheid melden
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Afwezigheid melden</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
+                      <div>
+                        <Label>Type</Label>
+                        <select
+                          className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          value={absenceForm.type}
+                          onChange={(e) => setAbsenceForm({ ...absenceForm, type: e.target.value as Absence['type'] })}
+                        >
+                          <option value="ziekte">Ziekte</option>
+                          <option value="medische_afspraak">Medische afspraak</option>
+                          <option value="vakantie">Vakantie</option>
+                          <option value="andere">Anders</option>
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Start datum</Label>
+                          <Input
+                            type="date"
+                            value={absenceForm.start_date}
+                            onChange={(e) => setAbsenceForm({ ...absenceForm, start_date: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <Label>Eind datum</Label>
+                          <Input
+                            type="date"
+                            value={absenceForm.end_date}
+                            onChange={(e) => setAbsenceForm({ ...absenceForm, end_date: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Start tijd (optioneel)</Label>
+                          <Input
+                            type="time"
+                            value={absenceForm.start_time}
+                            onChange={(e) => setAbsenceForm({ ...absenceForm, start_time: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <Label>Eind tijd (optioneel)</Label>
+                          <Input
+                            type="time"
+                            value={absenceForm.end_time}
+                            onChange={(e) => setAbsenceForm({ ...absenceForm, end_time: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label>Notitie</Label>
+                        <textarea
+                          className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px]"
+                          value={absenceForm.note}
+                          onChange={(e) => setAbsenceForm({ ...absenceForm, note: e.target.value })}
+                          placeholder="Optionele opmerking..."
+                        />
+                      </div>
+                      <Button onClick={handleAbsenceSubmit} disabled={loading} className="w-full">
+                        {loading ? 'Bezig...' : 'Afwezigheid melden'}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog open={leaveOpen} onOpenChange={setLeaveOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full gap-2">
+                      <Umbrella className="w-4 h-4" />
+                      Vakantie aanvragen
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Vakantie aanvragen</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
+                      {leaveBalance && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+                          <p className="font-medium text-blue-800">
+                            Vakantiesaldo: {leaveBalance.total_hours - leaveBalance.used_hours - leaveBalance.pending_hours} uur beschikbaar
+                          </p>
+                          <p className="text-blue-600 text-xs">
+                            Totaal: {leaveBalance.total_hours}u | Opgenomen: {leaveBalance.used_hours}u | In behandeling: {leaveBalance.pending_hours}u
+                          </p>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Start datum</Label>
+                          <Input
+                            type="date"
+                            value={leaveForm.start_date}
+                            onChange={(e) => setLeaveForm({ ...leaveForm, start_date: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <Label>Eind datum</Label>
+                          <Input
+                            type="date"
+                            value={leaveForm.end_date}
+                            onChange={(e) => setLeaveForm({ ...leaveForm, end_date: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Aantal uren</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={160}
+                            value={leaveForm.hours}
+                            onChange={(e) => setLeaveForm({ ...leaveForm, hours: parseInt(e.target.value) || 0 })}
+                          />
+                        </div>
+                        <div>
+                          <Label>Type</Label>
+                          <select
+                            className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            value={leaveForm.type}
+                            onChange={(e) => setLeaveForm({ ...leaveForm, type: e.target.value as LeaveRequest['type'] })}
+                          >
+                            <option value="vakantie">Vakantie</option>
+                            <option value="adv">ADV</option>
+                            <option value="zorgverlof">Zorgverlof</option>
+                            <option value="andere">Anders</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <Label>Notitie</Label>
+                        <textarea
+                          className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px]"
+                          value={leaveForm.note}
+                          onChange={(e) => setLeaveForm({ ...leaveForm, note: e.target.value })}
+                          placeholder="Optionele opmerking..."
+                        />
+                      </div>
+                      <Button onClick={handleLeaveSubmit} disabled={loading} className="w-full">
+                        {loading ? 'Bezig...' : 'Aanvraag indienen'}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              {/* Schedule */}
+              {schedules.length > 0 && (
+                <div className="bg-card rounded-xl border border-border shadow-sm">
+                  <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-brand-600" />
+                    <h3 className="font-semibold text-sm">Mijn rooster</h3>
+                  </div>
+                  <div className="divide-y divide-border">
+                    {schedules.map((sched) => (
+                      <div key={sched.id} className="px-4 py-2 flex items-center justify-between text-sm">
+                        <span className="font-medium">{DUTCH_DAYS[sched.day_of_week]}</span>
+                        <span className="text-muted-foreground">
+                          {formatTimeDisplay(sched.start_time)} - {formatTimeDisplay(sched.end_time)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Leave Requests */}
+              {leaveRequests.length > 0 && (
+                <div className="bg-card rounded-xl border border-border shadow-sm">
+                  <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-brand-600" />
+                    <h3 className="font-semibold text-sm">Mijn verlofaanvragen</h3>
+                  </div>
+                  <div className="divide-y divide-border">
+                    {leaveRequests.map((req) => (
+                      <div key={req.id} className="px-4 py-3 flex items-center justify-between text-sm">
+                        <div>
+                          <p className="font-medium">{formatDutchDateOnly(req.start_date)} {req.start_date !== req.end_date && `– ${formatDutchDateOnly(req.end_date)}`}</p>
+                          <p className="text-muted-foreground text-xs">{req.hours_requested} uur — {req.type}</p>
+                        </div>
+                        {getStatusBadge(req.status)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Today's Timeline */}
               <div className="bg-card rounded-xl border border-border shadow-sm">
