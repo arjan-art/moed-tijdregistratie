@@ -11,6 +11,9 @@ import {
   LogOut,
   Menu,
   X,
+  Calendar,
+  HeartPulse,
+  Umbrella,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -19,6 +22,9 @@ const navItems = [
   { to: '/admin/employees', label: 'Werknemers', icon: Users },
   { to: '/admin/time-entries', label: 'Uren', icon: Clock },
   { to: '/admin/work-zones', label: 'Werkzones', icon: MapPin },
+  { to: '/admin/schedules', label: 'Rooster', icon: Calendar },
+  { to: '/admin/absences', label: 'Afwezigheid', icon: HeartPulse },
+  { to: '/admin/leave', label: 'Vakantie', icon: Umbrella },
   { to: '/admin/admins', label: 'Beheerders', icon: ShieldCheck },
   { to: '/admin/settings', label: 'Instellingen', icon: Settings },
 ]
@@ -34,7 +40,6 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Mobile overlay */}
       <AnimatePresence>
         {sidebarOpen && (
           <motion.div
@@ -47,7 +52,6 @@ export default function AdminLayout() {
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
       <motion.aside
         className={cn(
           'fixed lg:static inset-y-0 left-0 z-50 w-64 bg-brand-800 text-white flex flex-col shadow-xl',
@@ -103,7 +107,6 @@ export default function AdminLayout() {
         </div>
       </motion.aside>
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 bg-card border-b border-border flex items-center px-4 lg:px-8 gap-4 shadow-sm">
           <button

@@ -77,6 +77,58 @@ export interface EmailLog {
   created_at: string
 }
 
+export interface Schedule {
+  id: string
+  employee_id: string
+  day_of_week: number
+  start_time: string
+  end_time: string
+  is_recurring: boolean
+  specific_date: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Absence {
+  id: string
+  employee_id: string
+  type: 'ziekte' | 'medische_afspraak' | 'vakantie' | 'andere'
+  start_date: string
+  end_date: string
+  start_time: string | null
+  end_time: string | null
+  note: string | null
+  status: 'ingediend' | 'goedgekeurd' | 'afgewezen'
+  created_at: string
+  updated_at: string
+}
+
+export interface LeaveRequest {
+  id: string
+  employee_id: string
+  start_date: string
+  end_date: string
+  hours_requested: number
+  type: 'vakantie' | 'adv' | 'zorgverlof' | 'andere'
+  note: string | null
+  status: 'ingediend' | 'goedgekeurd' | 'afgewezen'
+  reviewed_by: string | null
+  reviewed_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface LeaveBalance {
+  id: string
+  employee_id: string
+  year: number
+  total_hours: number
+  used_hours: number
+  pending_hours: number
+  created_at: string
+  updated_at: string
+}
+
 export async function getEmployees(): Promise<Employee[]> {
   const { data, error } = await supabase.from('employees').select('*').order('name')
   if (error) {
@@ -384,4 +436,223 @@ export async function sendWelcomeEmail(employeeName: string, employeeEmail: stri
     console.error('sendWelcomeEmail exception:', err)
     return { success: false, message: err.message || 'E-mail versturen mislukt' }
   }
+}
+
+// ============ ABSENCES ============
+
+export async function getAbsences(): Promise<Absence[]> {
+  const { data, error } = await supabase.from('absences').select('*').order('start_date', { ascending: false })
+  if (error) {
+    console.error('getAbsences error:', error)
+    return []
+  }
+  return data || []
+}
+
+export async function getAbsencesByEmployee(employeeId: string): Promise<Absence[]> {
+  const { data, error } = await supabase
+    .from('absences')
+    .select('*')
+    .eq('employee_id', employeeId)
+    .order('start_date', { ascending: false })
+  if (error) {
+    console.error('getAbsencesByEmployee error:', error)
+    return []
+  }
+  return data || []
+}
+
+export async function addAbsence(absence: Omit<Absence, 'id' | 'created_at' | 'updated_at'>): Promise<string | null> {
+  const { data, error } = await supabase.from('absences').insert(absence).select('id').single()
+  if (error) {
+    console.error('addAbsence error:', error)
+    return null
+  }
+  return data?.id || null
+}
+
+export async function updateAbsence(id: string, data: Partial<Absence>): Promise<boolean> {
+  const { error } = await supabase.from('absences').update(data).eq('id', id)
+  if (error) {
+    console.error('updateAbsence error:', error)
+    return false
+  }
+  return true
+}
+
+export async function deleteAbsence(id: string): Promise<boolean> {
+  const { error } = await supabase.from('absences').delete().eq('id', id)
+  if (error) {
+    console.error('deleteAbsence error:', error)
+    return false
+  }
+  return true
+}
+
+// ============ LEAVE REQUESTS ============
+
+export async function getLeaveRequests(): Promise<LeaveRequest[]> {
+  const { data, error } = await supabase.from('leave_requests').select('*').order('created_at', { ascending: false })
+  if (error) {
+    console.error('getLeaveRequests error:', error)
+    return []
+  }
+  return data || []
+}
+
+export async function getLeaveRequestsByEmployee(employeeId: string): Promise<LeaveRequest[]> {
+  const { data, error } = await supabase
+    .from('leave_requests')
+    .select('*')
+    .eq('employee_id', employeeId)
+    .order('created_at', { ascending: false })
+  if (error) {
+    console.error('getLeaveRequestsByEmployee error:', error)
+    return []
+  }
+  return data || []
+}
+
+export async function addLeaveRequest(request: Omit<LeaveRequest, 'id' | 'status' | 'reviewed_by' | 'reviewed_at' | 'created_at' | 'updated_at'>): Promise<string | null> {
+  const { data, error } = await supabase.from('leave_requests').insert({
+    ...request,
+    status: 'ingediend',
+    reviewed_by: null,
+    reviewed_at: null,
+  }).select('id').single()
+  if (error) {
+    console.error('addLeaveRequest error:', error)
+    return null
+  }
+  return data?.id || null
+}
+
+export async function updateLeaveRequest(id: string, data: Partial<LeaveRequest>): Promise<boolean> {
+  const { error } = await supabase.from('leave_requests').update(data).eq('id', id)
+  if (error) {
+    console.error('updateLeaveRequest error:', error)
+    return false
+  }
+  return true
+}
+
+export async function deleteLeaveRequest(id: string): Promise<boolean> {
+  const { error } = await supabase.from('leave_requests').delete().eq('id', id)
+  if (error) {
+    console.error('deleteLeaveRequest error:', error)
+    return false
+  }
+  return true
+}
+
+export async function getLeaveBalances(): Promise<LeaveBalance[]> {
+  const { data, error } = await supabase
+    .from('leave_balance')
+    .select('*, employees(name)')
+    .order('year', { ascending: false })
+  if (error) {
+    console.error('getLeaveBalances error:', error)
+    return []
+  }
+  return data || []
+}
+
+export async function reviewLeaveRequest(
+  requestId: string,
+  status: 'goedgekeurd' | 'afgewezen',
+  adminId: string
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('leave_requests')
+    .update({
+      status,
+      reviewed_by: adminId,
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq('id', requestId)
+  if (error) {
+    console.error('reviewLeaveRequest error:', error)
+    return false
+  }
+  return true
+}
+
+export async function upsertLeaveBalance(
+  balance: Omit<LeaveBalance, 'id' | 'created_at' | 'updated_at'> & { id?: string }
+): Promise<boolean> {
+  const { error } = await supabase.from('leave_balance').upsert({
+    ...balance,
+    updated_at: new Date().toISOString(),
+  })
+  if (error) {
+    console.error('upsertLeaveBalance error:', error)
+    return false
+  }
+  return true
+}
+
+export async function getLeaveBalanceByEmployee(employeeId: string, year?: number): Promise<LeaveBalance | null> {
+  const targetYear = year || new Date().getFullYear()
+  const { data, error } = await supabase
+    .from('leave_balance')
+    .select('*')
+    .eq('employee_id', employeeId)
+    .eq('year', targetYear)
+    .single()
+  if (error) {
+    console.error('getLeaveBalanceByEmployee error:', error)
+    return null
+  }
+  return data
+}
+
+// ============ SCHEDULES ============
+
+export async function getSchedules(): Promise<Schedule[]> {
+  const { data, error } = await supabase.from('schedules').select('*, employees(name)').order('day_of_week')
+  if (error) {
+    console.error('getSchedules error:', error)
+    return []
+  }
+  return data || []
+}
+
+export async function getSchedulesByEmployee(employeeId: string): Promise<Schedule[]> {
+  const { data, error } = await supabase
+    .from('schedules')
+    .select('*')
+    .eq('employee_id', employeeId)
+    .order('day_of_week')
+  if (error) {
+    console.error('getSchedulesByEmployee error:', error)
+    return []
+  }
+  return data || []
+}
+
+export async function addSchedule(schedule: Omit<Schedule, 'id' | 'created_at' | 'updated_at'>): Promise<string | null> {
+  const { data, error } = await supabase.from('schedules').insert(schedule).select('id').single()
+  if (error) {
+    console.error('addSchedule error:', error)
+    return null
+  }
+  return data?.id || null
+}
+
+export async function updateSchedule(id: string, data: Partial<Schedule>): Promise<boolean> {
+  const { error } = await supabase.from('schedules').update(data).eq('id', id)
+  if (error) {
+    console.error('updateSchedule error:', error)
+    return false
+  }
+  return true
+}
+
+export async function deleteSchedule(id: string): Promise<boolean> {
+  const { error } = await supabase.from('schedules').delete().eq('id', id)
+  if (error) {
+    console.error('deleteSchedule error:', error)
+    return false
+  }
+  return true
 }
