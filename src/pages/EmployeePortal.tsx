@@ -10,6 +10,7 @@ import {
   Clock,
   MapPin,
   AlertCircle,
+  AlertTriangle,
   CheckCircle2,
   HeartPulse,
   Umbrella,
@@ -21,6 +22,7 @@ import {
   addTimeEntry,
   getTimeEntriesByDate,
   getWorkZones,
+  getWorkZoneById,
   addAbsence,
   addLeaveRequest,
   getLeaveBalanceByEmployee,
@@ -51,12 +53,40 @@ function getTodayDate(): string {
   return new Date().toISOString().split('T')[0]
 }
 
+/* ── GPS helpers ─────────────────────────────────────────── */
+
+function getCurrentPosition(): Promise<GeolocationPosition> {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocatie wordt niet ondersteund door dit apparaat.'))
+      return
+    }
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0,
+    })
+  })
+}
+
+function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000 // aardstraal in meters
+  const toRad = (deg: number) => (deg * Math.PI) / 180
+  const dLat = toRad(lat2 - lat1)
+  const dLng = toRad(lng2 - lng1)
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c
+}
+
 export default function EmployeePortal() {
   const [pin, setPin] = useState('')
   const [employee, setEmployee] = useState<Employee | null>(null)
   const [entries, setEntries] = useState<TimeEntry[]>([])
   const [message, setMessage] = useState('')
-  const [messageType, setMessageType] = useState<'success' | 'error'>('success')
+  const [messageType, setMessageType] = useState<'success' | 'error' | 'warning'>('success')
   const [loading, setLoading] = useState(false)
   const [activeSession, setActiveSession] = useState<{ start: string; type: string } | null>(null)
   const [elapsed, setElapsed] = useState('00:00:00')
@@ -157,22 +187,47 @@ export default function EmployeePortal() {
     if (!employee) return
     setLoading(true)
 
-    const workZones = await getWorkZones()
-    const defaultZone = workZones.find(z => z.is_default)
+    /* ── Werkzone bepalen ─────────────────────────────── */
+    let zoneName = ''
+    let isOutside = false
+    let outsideReason = ''
+
+    if (employee.work_zone_id) {
+      const zone = await getWorkZoneById(employee.work_zone_id)
+      if (zone) {
+        zoneName = zone.name
+
+        /* ── GPS check (alleen bij inklokken/uitklokken) ── */
+        if (type === 'inklokken' || type === 'uitklokken') {
+          if (zone.lat != null && zone.lng != null && zone.radius > 0) {
+            try {
+              const position = await getCurrentPosition()
+              const userLat = position.coords.latitude
+              const userLng = position.coords.longitude
+              const distance = haversineDistance(zone.lat, zone.lng, userLat, userLng)
+
+              if (distance > zone.radius) {
+                isOutside = true
+                outsideReason = `Je bent ~${Math.round(distance)}m van ${zone.name} (max ${zone.radius}m).`
+              }
+            } catch (geoErr: any) {
+              // GPS niet beschikbaar → toch doorlaten, maar loggen
+              console.warn('GPS niet beschikbaar:', geoErr.message)
+            }
+          }
+        }
+      }
+    }
 
     const entry: Omit<TimeEntry, 'id' | 'created_at'> = {
       employee_id: employee.id,
       employee_name: employee.name,
       type,
       timestamp: new Date().toISOString(),
-      note: '',
+      note: zoneName ? `Zone: ${zoneName}` : '',
       date: today,
-      location: 'binnen',
-      reason: '',
-    }
-
-    if (defaultZone) {
-      entry.note = `Zone: ${defaultZone.name}`
+      location: isOutside ? 'buiten' : 'binnen',
+      reason: isOutside ? outsideReason : '',
     }
 
     await addTimeEntry(entry)
@@ -184,10 +239,17 @@ export default function EmployeePortal() {
       pauze_in: 'Pauze gestart!',
       pauze_uit: 'Pauze beëindigd!',
     }
-    setMessage(actionLabels[type] || 'Actie geregistreerd!')
-    setMessageType('success')
+
+    if (isOutside) {
+      setMessage(`${actionLabels[type] || 'Actie geregistreerd!'} ⚠️ ${outsideReason}`)
+      setMessageType('warning')
+    } else {
+      setMessage(actionLabels[type] || 'Actie geregistreerd!')
+      setMessageType('success')
+    }
+
     setLoading(false)
-    setTimeout(() => setMessage(''), 3000)
+    setTimeout(() => setMessage(''), 5000)
   }
 
   const handleLogout = () => {
@@ -760,11 +822,15 @@ export default function EmployeePortal() {
               className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-lg flex items-center gap-2 z-50 ${
                 messageType === 'success'
                   ? 'bg-green-600 text-white'
+                  : messageType === 'warning'
+                  ? 'bg-amber-500 text-white'
                   : 'bg-red-500 text-white'
               }`}
             >
               {messageType === 'success' ? (
                 <CheckCircle2 className="w-5 h-5" />
+              ) : messageType === 'warning' ? (
+                <AlertTriangle className="w-5 h-5" />
               ) : (
                 <AlertCircle className="w-5 h-5" />
               )}
