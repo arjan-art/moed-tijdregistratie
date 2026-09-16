@@ -23,6 +23,8 @@ export default function AdminWorkZones() {
     address: '',
     radius: 500,
     is_default: false,
+    lat: null as number | null,
+    lng: null as number | null,
   })
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
 
@@ -38,7 +40,7 @@ export default function AdminWorkZones() {
   }
 
   const resetForm = () => {
-    setFormData({ name: '', address: '', radius: 500, is_default: false })
+    setFormData({ name: '', address: '', radius: 500, is_default: false, lat: null, lng: null })
     setEditingId(null)
     setShowForm(false)
   }
@@ -68,6 +70,8 @@ export default function AdminWorkZones() {
       address: zone.address,
       radius: zone.radius,
       is_default: zone.is_default,
+      lat: zone.lat ?? null,
+      lng: zone.lng ?? null,
     })
     setEditingId(zone.id)
     setShowForm(true)
@@ -250,7 +254,7 @@ export default function AdminWorkZones() {
                       </button>
                       <button
                         onClick={() => setDeleteConfirm(null)}
-                        className="p-2 rounded-lg hover:bg-muted transition-colors"
+                        className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -258,7 +262,7 @@ export default function AdminWorkZones() {
                   ) : (
                     <button
                       onClick={() => setDeleteConfirm(zone.id)}
-                      className="p-2 rounded-lg hover:bg-red-50 transition-colors text-muted-foreground hover:text-red-500"
+                      className="p-2 rounded-lg hover:bg-red-50 transition-colors text-muted-foreground hover:text-red-600"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -267,24 +271,19 @@ export default function AdminWorkZones() {
               </div>
 
               <div className="space-y-2 text-sm">
-                <div className="flex items-start gap-2 text-muted-foreground">
-                  <MapPin className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>{zone.address}</span>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">{zone.address}</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>Radius: {zone.radius} meter</span>
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>Radius: {zone.radius}m</span>
                 </div>
-              </div>
-
-              {/* Radius Visual */}
-              <div className="mt-4 relative h-2 bg-muted rounded-full overflow-hidden">
-                <motion.div
-                  className="absolute left-0 top-0 h-full bg-brand-400 rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.min((zone.radius / 2000) * 100, 100)}%` }}
-                  transition={{ duration: 0.5 }}
-                />
+                {(zone.lat != null || zone.lng != null) && (
+                  <div className="text-xs text-muted-foreground font-mono bg-muted rounded-lg px-2 py-1">
+                    {zone.lat?.toFixed(6) ?? '—'}, {zone.lng?.toFixed(6) ?? '—'}
+                  </div>
+                )}
               </div>
             </motion.div>
           ))}
