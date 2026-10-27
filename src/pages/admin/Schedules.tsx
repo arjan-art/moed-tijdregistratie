@@ -26,6 +26,7 @@ interface ScheduleFormData {
   start_time: string
   end_time: string
   is_recurring: boolean
+  specific_date: string | null
 }
 
 const defaultFormData: ScheduleFormData = {
@@ -34,6 +35,7 @@ const defaultFormData: ScheduleFormData = {
   start_time: '08:00',
   end_time: '17:00',
   is_recurring: true,
+  specific_date: null,
 }
 
 export default function AdminSchedules() {
@@ -109,6 +111,7 @@ export default function AdminSchedules() {
       start_time: schedule.start_time,
       end_time: schedule.end_time,
       is_recurring: schedule.is_recurring,
+      specific_date: schedule.specific_date ?? null,
     })
     setEditingId(schedule.id)
     setShowForm(true)
@@ -360,8 +363,8 @@ export default function AdminSchedules() {
                         <div>
                           <p className="text-sm font-medium">{emp?.name || 'Onbekend'}</p>
                           <p className="text-xs text-muted-foreground">
-                            {getDutchDayName(schedule.day_of_week)} • {schedule.start_time.slice(0, 5)} - {schedule.end_time.slice(0, 5)}
-                            {schedule.is_recurring && ' • Wekelijks'}
+                            {getDutchDayName(schedule.day_of_week)} &bull; {schedule.start_time.slice(0, 5)} - {schedule.end_time.slice(0, 5)}
+                            {schedule.is_recurring && ' &bull; Wekelijks'}
                           </p>
                         </div>
                       </div>
