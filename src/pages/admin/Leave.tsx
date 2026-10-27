@@ -15,9 +15,7 @@ import {
   Clock,
   AlertCircle,
   ChevronDown,
-  ChevronUp,
 } from 'lucide-react'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
   getEmployees,
   getLeaveRequests,
@@ -26,7 +24,6 @@ import {
   deleteLeaveRequest,
   upsertLeaveBalance,
 } from '@/lib/db'
-import { supabase } from '@/lib/supabase'
 import type { Employee, LeaveRequest, LeaveBalance } from '@/lib/db'
 import { formatDutchDateOnly } from '@/lib/timezone'
 
@@ -76,7 +73,6 @@ export default function AdminLeave() {
   // ── Tab 1: Requests ──
   const [searchRequest, setSearchRequest] = useState('')
   const [statusFilter, setStatusFilter] = useState<LeaveStatus>('alle')
-  const [showPendingOnly, setShowPendingOnly] = useState(false)
   const [reviewLoading, setReviewLoading] = useState<string | null>(null)
   const [deleteConfirmRequest, setDeleteConfirmRequest] = useState<string | null>(null)
 
@@ -273,9 +269,16 @@ export default function AdminLeave() {
         )}
       </AnimatePresence>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 sm:w-fit">
-          <TabsTrigger value="requests" className="gap-1.5">
+      <div className="space-y-6">
+        <div className="grid w-full grid-cols-2 sm:w-fit bg-gray-100 rounded-lg p-1">
+          <button
+            onClick={() => setActiveTab('requests')}
+            className={`flex items-center justify-center gap-1.5 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+              activeTab === 'requests'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
             <Calendar className="w-4 h-4" />
             Vakantieaanvragen
             {pendingRequests.length > 0 && (
@@ -283,17 +286,24 @@ export default function AdminLeave() {
                 {pendingRequests.length}
               </span>
             )}
-          </TabsTrigger>
-          <TabsTrigger value="balances" className="gap-1.5">
+          </button>
+          <button
+            onClick={() => setActiveTab('balances')}
+            className={`flex items-center justify-center gap-1.5 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+              activeTab === 'balances'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
             <Clock className="w-4 h-4" />
             Vakantiesaldo
-          </TabsTrigger>
-        </TabsList>
+          </button>
+        </div>
 
         {/* ════════════════════════════════════════════
             TAB 1: VAKANTIEAANVRAGEN (Leave Requests)
             ════════════════════════════════════════════ */}
-        <TabsContent value="requests" className="space-y-6">
+        {activeTab === 'requests' && <div className="space-y-6">
           {/* ── Pending requests (highlighted) ── */}
           {pendingRequests.length > 0 && (
             <motion.div
@@ -577,12 +587,12 @@ export default function AdminLeave() {
               </div>
             </div>
           </div>
-        </TabsContent>
+        </div>}
 
         {/* ════════════════════════════════════════════
             TAB 2: VAKANTIESALDO (Leave Balances)
             ════════════════════════════════════════════ */}
-        <TabsContent value="balances" className="space-y-6">
+        {activeTab === 'balances' && <div className="space-y-6">
           {/* Summary cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <motion.div
@@ -752,8 +762,8 @@ export default function AdminLeave() {
               </table>
             </div>
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>}
+      </div>
 
       {/* ════════════════════════════════════════════
           EDIT BALANCE MODAL
