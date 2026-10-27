@@ -32,6 +32,7 @@ export interface TimeEntry {
   date: string
   location: 'binnen' | 'buiten'
   reason: string
+  zone_id?: string
   created_at: string
 }
 
@@ -78,8 +79,6 @@ export interface EmailLog {
   sent_at: string | null
   created_at: string
 }
-
-
 
 export async function getEmployees(): Promise<Employee[]> {
   const { data, error } = await supabase.from('employees').select('*').order('name')
@@ -406,6 +405,8 @@ export interface Absence {
   updated_at: string
 }
 
+export type AbsenceType = Absence['type']
+
 export async function getAbsences(): Promise<Absence[]> {
   const { data, error } = await supabase.from('absences').select('*').order('start_date', { ascending: false })
   if (error) {
@@ -660,5 +661,3 @@ export async function deleteSchedule(id: string): Promise<boolean> {
   }
   return true
 }
-
-
